@@ -10,9 +10,8 @@
             End If
         ElseIf Is64bit() Then
             x = My.Computer.Registry.GetValue("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Office\12.0\Access Connectivity Engine\Engines\Excel", "TypeGuessRows", Nothing)
-            MsgBox(x)
             If x <> "0" Then
-                '   My.Computer.Registry.SetValue("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Office\12.0\Access Connectivity Engine\Engines\Excel", "TypeGuessRows", 0, Microsoft.Win32.RegistryValueKind.DWord)
+                My.Computer.Registry.SetValue("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Office\12.0\Access Connectivity Engine\Engines\Excel", "TypeGuessRows", 0, Microsoft.Win32.RegistryValueKind.DWord)
             End If
         End If
 
@@ -53,7 +52,6 @@
 
     Private Sub Button1_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button1.Click
         Dim th As String = DataGridView1.Item("零件号", DataGridView1.CurrentCell.RowIndex).Value
-        MsgBox(th)
         Dim inv As New Inventory(th)
         MsgBox(inv.cInvCode)
     End Sub

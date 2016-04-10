@@ -33,3 +33,5 @@ C:\Users\zhangjc\Documents\GitHub\U8SOImport\U8SOImport\obj\Debug\U8SOImport.exe
 C:\Users\zhangjc\Documents\GitHub\U8SOImport\U8SOImport\obj\Debug\U8SOImport.xml
 C:\Users\zhangjc\Documents\GitHub\U8SOImport\U8SOImport\obj\Debug\U8SOImport.pdb
 C:\Users\zhangjc\Documents\GitHub\U8SOImport\U8SOImport\obj\Debug\U8SOImport.ExcelLoad.resources
+C:\Users\zhangjc\Documents\GitHub\U8SOImport\U8SOImport\obj\Debug\U8SOImport.Form1.resources
+C:\Users\zhangjc\Documents\GitHub\U8SOImport\U8SOImport\bin\Debug\ADODB.dll
