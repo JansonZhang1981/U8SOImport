@@ -26,6 +26,7 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DocumentationFile>U8SOImport.xml</DocumentationFile>
     <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
+    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -35,6 +36,7 @@
     <OutputPath>bin\Release\</OutputPath>
     <DocumentationFile>U8SOImport.xml</DocumentationFile>
     <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
+    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Interop.MSXML2, Version=3.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -86,13 +88,20 @@
     <Import Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Form1.vb">
+    <Compile Include="ExcelLoad.Designer.vb">
+      <DependentUpon>ExcelLoad.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ExcelLoad.vb">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Form1.Designer.vb">
-      <DependentUpon>Form1.vb</DependentUpon>
+    <Compile Include="FileOpen.Designer.vb">
+      <DependentUpon>FileOpen.vb</DependentUpon>
+    </Compile>
+    <Compile Include="FileOpen.vb">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Inventory.vb" />
+    <Compile Include="item.vb" />
     <Compile Include="LoginForm.Designer.vb">
       <DependentUpon>LoginForm.vb</DependentUpon>
     </Compile>
@@ -117,6 +126,12 @@
     <Compile Include="util.vb" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="ExcelLoad.resx">
+      <DependentUpon>ExcelLoad.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FileOpen.resx">
+      <DependentUpon>FileOpen.vb</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="LoginForm.resx">
       <DependentUpon>LoginForm.vb</DependentUpon>
     </EmbeddedResource>

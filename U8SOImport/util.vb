@@ -10,5 +10,18 @@ Module util
     Public u8login As U8Login.clsLogin
     Public connstr As String
     Public conn As New OleDbConnection
+    Public filename As String
+
+    Public Function Is64bit() As Boolean
+        If Environment.GetEnvironmentVariable("Program Files(x86)") = "" Then
+
+            Return True
+        Else
+
+            Return False
+
+        End If
+
+    End Function
 
 End Module
