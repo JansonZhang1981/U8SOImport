@@ -25,9 +25,9 @@ Public Class Form1
         '给BO对象(表头)的字段赋值，值可以是真实类型，也可以是无类型字符串
 
         '****************************** 以下是必输字段 *****************************
-        domHead(0).SetValue("id", "100000001")   '主关键字段，Integer类型
-        domHead(0).SetValue("csocode", "200000001")   '订 单 号，String类型
-        domHead(0).SetValue("ddate", "2016-4-9")   '订单日期，Date类型
+        domHead(0).SetValue("id", "100000002")   '主关键字段，Integer类型
+        domHead(0).SetValue("csocode", "200000002")   '订 单 号，String类型
+        domHead(0).SetValue("ddate", "2016-4-11")   '订单日期，Date类型
         domHead(0).SetValue("cbustype", "普通销售")   '业务类型，Integer类型
         domHead(0).SetValue("cstname", "普通销售")   '销售类型，String类型
         domHead(0).SetValue("ccusabbname", "商用车")   '客户简称，String类型
@@ -185,7 +185,7 @@ Public Class Form1
         domBody(0).SetValue("dpremodate", "2016-4-19")   '预完工日期，Date类型
         'domBody(0).SetValue("borderbom", "字段值")   '是否订单BOM，Integer类型
         'domBody(0).SetValue("borderbomover", "字段值")   '订单BOM是否完成，Integer类型
-        domBody(0).SetValue("id", "100000001")   '主表id，Integer类型
+        domBody(0).SetValue("id", "100000002")   '主表id，Integer类型
         'domBody(0).SetValue("iinvexchrate", "字段值")   '换算率，Double类型
         'domBody(0).SetValue("cunitid", "字段值")   '销售单位编码，String类型
         'domBody(0).SetValue("cinva_unit", "字段值")   '销售单位，String类型
@@ -378,7 +378,6 @@ Public Class Form1
             '获取普通返回值。此返回值数据类型为String，此参数按值传递，表示成功为空串
             Dim result As String
             result = CStr(u8apiBroker.GetReturnValue())
-            MsgBox(result)
             '获取out/inout参数值
 
             '获取普通INOUT参数vNewID。此返回值数据类型为String，在使用该参数之前，请判断是否为空
@@ -396,6 +395,10 @@ Public Class Form1
 ErrHandler:
         MsgBox(Err.Description)
 
+
+    End Sub
+
+    Private Sub Form1_Load(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Load
 
     End Sub
 End Class

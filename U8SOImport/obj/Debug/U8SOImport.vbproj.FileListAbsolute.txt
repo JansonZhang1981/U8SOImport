@@ -35,3 +35,5 @@ C:\Users\zhangjc\Documents\GitHub\U8SOImport\U8SOImport\obj\Debug\U8SOImport.pdb
 C:\Users\zhangjc\Documents\GitHub\U8SOImport\U8SOImport\obj\Debug\U8SOImport.ExcelLoad.resources
 C:\Users\zhangjc\Documents\GitHub\U8SOImport\U8SOImport\obj\Debug\U8SOImport.Form1.resources
 C:\Users\zhangjc\Documents\GitHub\U8SOImport\U8SOImport\bin\Debug\ADODB.dll
+C:\Users\zhangjc\Documents\GitHub\U8SOImport\U8SOImport\obj\Debug\Interop.MSXML2.dll
+C:\Users\zhangjc\Documents\GitHub\U8SOImport\U8SOImport\obj\Debug\U8SOImport.vbproj.ResolveComReference.cache
