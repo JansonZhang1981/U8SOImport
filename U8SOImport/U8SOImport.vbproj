@@ -132,6 +132,12 @@
     </Compile>
     <Compile Include="SOMain.vb" />
     <Compile Include="util.vb" />
+    <Compile Include="waitForm.Designer.vb">
+      <DependentUpon>waitForm.vb</DependentUpon>
+    </Compile>
+    <Compile Include="waitForm.vb">
+      <SubType>Form</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="ExcelLoad.resx">
@@ -151,6 +157,9 @@
       <LastGenOutput>Resources.Designer.vb</LastGenOutput>
       <CustomToolNamespace>My.Resources</CustomToolNamespace>
       <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="waitForm.resx">
+      <DependentUpon>waitForm.vb</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>

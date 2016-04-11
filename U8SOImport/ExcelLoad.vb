@@ -6,12 +6,15 @@ Imports UFIDA.U8.U8APIFramework
 Imports UFIDA.U8.U8APIFramework.Meta
 Imports UFIDA.U8.U8APIFramework.Parameter
 Imports MSXML2
+Imports System.Threading
 Public Class ExcelLoad
     Public SOMains As SOMain()
     Public j As Integer
     Public info As String
     Public excConn As OleDbConnection
     Private Sub ExcelLoad_Load(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Load
+        GroupBox1.Text = cus.ccusabbname
+
         Dim x As String
         If Not Is64bit() Then
             x = My.Computer.Registry.GetValue("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Office\12.0\Access Connectivity Engine\Engines\Excel", "TypeGuessRows", Nothing)
@@ -80,7 +83,16 @@ Public Class ExcelLoad
     End Sub
 
     Private Sub Button1_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button1.Click
+
+        Dim t As New Thread(AddressOf showprogressbar)
+
+        t.Start()
+        Thread.Sleep(0)
         SOImport()
+        t.Abort()
+        MsgBox("导入成功", MsgBoxStyle.OkOnly, "提示")
+
+
     End Sub
 
     Private Sub Button3_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button3.Click
@@ -164,14 +176,15 @@ Public Class ExcelLoad
             domHead(0).SetValue("ddate", Format(Now(), "yyyy-MM-dd"))   '订单日期，Date类型
             domHead(0).SetValue("cbustype", "普通销售")   '业务类型，Integer类型
             domHead(0).SetValue("cstname", "普通销售")   '销售类型，String类型
-            domHead(0).SetValue("ccusabbname", cus.Value)   '客户简称，String类型
+            domHead(0).SetValue("ccusabbname", cus.ccusabbname)   '客户简称，String类型
+            domHead(0).SetValue("ccuscode", cus.ccuscode)   '客户编码，String类型
+            domHead(0).SetValue("ccusname", cus.ccusname)   '客户名称，String类型
             domHead(0).SetValue("cdepname", "市场部")   '销售部门，String类型
             domHead(0).SetValue("itaxrate", "17")   '税率，Double类型
             domHead(0).SetValue("cexch_name", "人民币")   '币种，String类型
             domHead(0).SetValue("cmaker", u8login.cUserName)   '制单人，String类型
             domHead(0).SetValue("cstcode", "01")   '销售类型编号，String类型
             domHead(0).SetValue("cdepcode", "07")   '部门编码，String类型
-            domHead(0).SetValue("ccuscode", "01")   '客户编码，String类型
             domHead(0).SetValue("iexchrate", "1")   '汇率，Double类型
             domHead(0).SetValue("cdefine10", SOMains(i).dhf)   '到货方，String类型
             domHead(0).SetValue("cdefine11", SOMains(i).cusSONo)   '客户订单号，String类型
@@ -253,10 +266,12 @@ Public Class ExcelLoad
             u8apiBroker = Nothing
         Next
       
-        MsgBox("OK")
+        'MsgBox("导入成功", MsgBoxStyle.OkOnly, "提示")
+        Button1.Enabled = False
+        excConn.Close()
         Exit Sub
 ErrHandler:
-        MsgBox(v)
+        '  MsgBox(v)
         MsgBox(Err.Description)
 
 
@@ -276,5 +291,12 @@ ErrHandler:
 
         End Try
         
+    End Sub
+
+    Public Sub showprogressbar()
+
+        Dim pr As New waitForm
+        If pr.ShowDialog = Windows.Forms.DialogResult.Cancel Then Exit Sub
+
     End Sub
 End Class

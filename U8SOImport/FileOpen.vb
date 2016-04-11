@@ -34,11 +34,11 @@ Public Class FileOpen
         Else
             filename = TextBox1.Text
             cus = ComboBox1.SelectedItem
-            MsgBox(cus.Value)
+            ' MsgBox(cus.Value)
             Me.Hide()
-            '   Dim elForm As New ExcelLoad
+            Dim elForm As New ExcelLoad
 
-            '   elForm.Show()
+            elForm.Show()
         End If
 
     End Sub
