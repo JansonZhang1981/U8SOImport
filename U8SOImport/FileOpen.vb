@@ -33,8 +33,12 @@ Public Class FileOpen
             Return
         Else
             filename = TextBox1.Text
+            cus = ComboBox1.SelectedItem
+            MsgBox(cus.Value)
             Me.Hide()
-            ExcelLoad.Show()
+            '   Dim elForm As New ExcelLoad
+
+            '   elForm.Show()
         End If
 
     End Sub

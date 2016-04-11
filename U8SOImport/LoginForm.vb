@@ -23,15 +23,15 @@ Public Class LoginForm
             connstr = u8login.UfDbName
             conn.ConnectionString = connstr
             Me.Hide()
-            '  FileOpen.Show()
-            Form1.Show()
+            FileOpen.Show()
+            'Form1.Show()
         End If
 
         '  Me.Close()
     End Sub
 
     Private Sub Cancel_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Cancel.Click
-
+        '   MsgBox(u8login.cUserName)
         Me.Close()
 
     End Sub

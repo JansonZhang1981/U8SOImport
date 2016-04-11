@@ -11,6 +11,7 @@ Module util
     Public connstr As String
     Public conn As New OleDbConnection
     Public filename As String
+    Public cus As item
 
     Public Function Is64bit() As Boolean
         If Environment.GetEnvironmentVariable("Program Files(x86)") = "" Then
