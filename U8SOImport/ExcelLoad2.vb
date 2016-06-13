@@ -7,13 +7,15 @@ Imports UFIDA.U8.U8APIFramework.Meta
 Imports UFIDA.U8.U8APIFramework.Parameter
 Imports MSXML2
 Imports System.Threading
-Public Class ExcelLoad
-    Public SOMains As SOMain()
+Public Class ExcelLoad2
+    Public SMains As SOMain()
     Public j As Integer
     Public info As String
     Public excConn As OleDbConnection
+    Public dt As DataTable
+    Public fd(5) As String
     Private Sub ExcelLoad_Load(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Load
-        GroupBox1.Text = cus.ccusabbname
+        'GroupBox1.Text = cus.ccusabbname
 
         Dim x As String
         If Not Is64bit() Then
@@ -27,43 +29,43 @@ Public Class ExcelLoad
                 My.Computer.Registry.SetValue("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Office\12.0\Access Connectivity Engine\Engines\Excel", "TypeGuessRows", 0, Microsoft.Win32.RegistryValueKind.DWord)
             End If
         End If
-
-        Dim _Connectstring = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=<FilePath>;Extended Properties=""Excel 8.0;HDR=YES;IMEX=1"""
+        filename = "C:/123.xls"
+        Dim _Connectstring = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=<FilePath>;Extended Properties=""Excel 8.0;HDR=NO;IMEX=1"""
         excConn = New OleDb.OleDbConnection(_Connectstring.Replace("<FilePath>", filename))
         excConn.Open()
-        Dim dCmd As New OleDb.OleDbCommand
-        dCmd.CommandText = "select distinct 订单号 from [Sheet1$]  where 订单号 is not null"
-        dCmd.Connection = excConn
-        Try
-            Dim dr As OleDbDataReader
-            dr = dCmd.ExecuteReader
-            Dim i As Integer = 0
-            Do While dr.Read
-                Dim d2cmd As New OleDbCommand
-                d2cmd.CommandText = "select top 1 *  from [Sheet1$]  where 订单号 ='" + dr("订单号").ToString + "'"
-                d2cmd.Connection = excConn
-                Dim d2r As OleDbDataReader
-                d2r = d2cmd.ExecuteReader
-                Do While d2r.Read
-                    ReDim Preserve SOMains(i)
-                    Dim sm As New SOMain(d2r("订单号").ToString, d2r("到货方").ToString, d2r("要货方").ToString, d2r("到货仓库").ToString, Format(CDate(d2r("订单接收时间").ToString), "yyyy-MM-dd"), Format(CDate(d2r("要求到货时间").ToString), "yyyy-MM-dd"))
-                    SOMains(i) = sm
-                    i += 1
-                Loop
-            Loop
+        dt = New DataTable()
+        Dim Sql As String = "select * from [Sheet1$] where F1 is not null"
+        Dim mycommand As OleDbDataAdapter = New OleDbDataAdapter(Sql, excConn)
+        mycommand.Fill(dt)
+        fd(0) = dt.Rows(0)("F3").ToString
+        fd(1) = dt.Rows(0)("F4").ToString
+        fd(2) = dt.Rows(0)("F5").ToString
+        fd(3) = dt.Rows(0)("F6").ToString
+        fd(4) = dt.Rows(0)("F7").ToString
+        fd(5) = dt.Rows(0)("F8").ToString
 
-        Catch ex As Exception
-            MsgBox("请注意Sheet名是否为Sheet1！")
-        End Try
+        Dim dv As DataView = New DataView(dt)
+        Dim dt2 As DataTable = dv.ToTable(True, "F1")
+        Dim n As Integer = 0
+        For i = 0 To dt2.Rows.Count - 1
+            If dt2.Rows(i)("F1").ToString <> "到货工厂代码" Then
+                ReDim Preserve SMains(n)
+                Dim sm As New SOMain("", dt2.Rows(i)("F1").ToString, "", "", "", "")
+                SMains(n) = sm
+                n += 1
+            End If
+
+        Next
+
 
         j = 0
 
-        If SOMains.Length > 0 Then
+        If SMains.Length > 0 Then
             Button3.Enabled = True
             Button4.Enabled = True
             Button5.Enabled = True
             Button6.Enabled = True
-            showSO(j)
+            showSO1(j)
         Else
             Button3.Enabled = False
             Button4.Enabled = False
@@ -71,9 +73,7 @@ Public Class ExcelLoad
             Button6.Enabled = False
         End If
 
-        '  excConn.Close()
-
-
+       
     End Sub
 
     Private Sub Button2_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button2.Click
@@ -96,65 +96,68 @@ Public Class ExcelLoad
     End Sub
 
     Private Sub Button3_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button3.Click
-        showSO(0)
+        showSO1(0)
         j = 0
     End Sub
-    Private Sub showSO(ByVal i As Integer)
-        info = "第" + (i + 1).ToString + "页；共" + SOMains.Length.ToString + "页"
+    Public Sub showSO1(ByVal i As Integer)
+       
+        info = "第" + (i + 1).ToString + "页；共" + SMains.Length.ToString + "页"
+
         Label7.Text = info
-        TextBox1.Text = SOMains(i).cusSONo
-        TextBox2.Text = SOMains(i).yhf
-        TextBox3.Text = SOMains(i).dhf
-        TextBox4.Text = SOMains(i).dhck
-        TextBox5.Text = SOMains(i).sodate
-        TextBox6.Text = SOMains(i).dhrq
+        '    TextBox1.Text = SOMains(i).cusSONo
 
-        Dim dt As DataTable
+        TextBox3.Text = SMains(i).dhf
+        Dim dv As DataView = New DataView(dt)
+        dv.RowFilter = "F1 = '" + SMains(i).dhf + "'"
+        Dim dt2 As DataTable = dv.ToTable()
 
-        '上两行打开一个读取excel的链接
-        '   MsgBox(_Connectstring)
-        Dim mydataset As DataSet = New DataSet
-        Using da As OleDb.OleDbDataAdapter = New OleDb.OleDbDataAdapter("select distinct 零件号,零件名称,订货数量 from [Sheet1$] where 订单号='" + SOMains(i).cusSONo + "'", excConn)
+        Dim j, k As Integer
 
-            Try
-                dt = New DataTable
-                da.Fill(dt)
-            Catch ex As Exception
-                '   Console.WriteLine(ex)
-                MsgBox("请注意Sheet名是否为Sheet1！")
-            End Try
+        For j = 0 To dt2.Rows.Count - 1
+            Dim pn As String = dt2.Rows(j)("F2").ToString
 
-            '   dt = mydataset.Tables("Sheet1")
+            For k = 0 To 5
+                Dim x As Integer = k + 3
+                Dim col As String = "F" + CStr(x)
+                If dt2.Rows(j)(col).ToString <> "" Then
+                    Dim index As Integer = DataGridView1.Rows.Add()
+                    DataGridView1.Rows(index).Cells(0).Value = pn
 
-            DataGridView1.AutoGenerateColumns = True '自动创建列  
-            DataGridView1.DataSource = dt
-        End Using
+                    DataGridView1.Rows(index).Cells(1).Value = dt2.Rows(j)(col).ToString
+                    DataGridView1.Rows(index).Cells(2).Value = fd(k)
+
+                End If
+
+            Next
+
+        Next
+
     End Sub
 
 
     Private Sub Button4_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button4.Click
         If j > 0 Then
             j = j - 1
-            showSO(j)
+            showSO1(j)
         End If
     End Sub
 
     Private Sub Button5_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button5.Click
-        If j < SOMains.Length - 1 Then
+        If j < SMains.Length - 1 Then
             j = j + 1
-            showSO(j)
+            showSO1(j)
         End If
     End Sub
 
     Private Sub Button6_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button6.Click
-        j = SOMains.Length - 1
-        showSO(j)
+        j = SMains.Length - 1
+        showSO1(j)
     End Sub
     Private Sub SOImport()
         On Error GoTo ErrHandler
         Dim v As Integer
 
-        For i = 0 To SOMains.Length - 1
+        For i = 0 To SMains.Length - 1
             Dim u8EnvCtx As New U8EnvContext
             u8EnvCtx.U8Login = u8login
             '设置上下文参数
@@ -186,16 +189,16 @@ Public Class ExcelLoad
             domHead(0).SetValue("cstcode", "01")   '销售类型编号，String类型
             domHead(0).SetValue("cdepcode", "07")   '部门编码，String类型
             domHead(0).SetValue("iexchrate", "1")   '汇率，Double类型
-            domHead(0).SetValue("cdefine10", SOMains(i).dhf)   '到货方，String类型
-            domHead(0).SetValue("cdefine11", SOMains(i).cusSONo)   '客户订单号，String类型
-            domHead(0).SetValue("cdefine12", SOMains(i).yhf)   '要货方，String类型
-            domHead(0).SetValue("cdefine13", SOMains(i).dhck)   '到货仓库，String类型
+            domHead(0).SetValue("cdefine10", SMains(i).dhf)   '到货方，String类型
+            domHead(0).SetValue("cdefine11", SMains(i).cusSONo)   '客户订单号，String类型
+            domHead(0).SetValue("cdefine12", SMains(i).yhf)   '要货方，String类型
+            domHead(0).SetValue("cdefine13", SMains(i).dhck)   '到货仓库，String类型
 
             Dim domBody As BusinessObject
             domBody = u8apiBroker.GetBoParam("domBody")
             ' domBody.RowCount = 10 '设置BO对象(表体)行数为多行
             Dim d3Cmd As New OleDb.OleDbCommand
-            d3Cmd.CommandText = "select * from [Sheet1$]  where 订单号 ='" + SOMains(i).cusSONo + "'"
+            d3Cmd.CommandText = "select * from [Sheet1$]  where 订单号 ='" + SMains(i).cusSONo + "'"
             d3Cmd.Connection = excConn
             Dim d3r As OleDbDataReader
             d3r = d3Cmd.ExecuteReader
@@ -265,7 +268,7 @@ Public Class ExcelLoad
 
             u8apiBroker = Nothing
         Next
-      
+
         'MsgBox("导入成功", MsgBoxStyle.OkOnly, "提示")
         Button1.Enabled = False
         excConn.Close()
@@ -277,7 +280,7 @@ ErrHandler:
 
     End Sub
 
-   
+
 
     Private Sub DataGridView1_RowPostPaint(ByVal sender As Object, ByVal e As System.Windows.Forms.DataGridViewRowPostPaintEventArgs) Handles DataGridView1.RowPostPaint
         Try
@@ -290,7 +293,7 @@ ErrHandler:
             MsgBox(ex.ToString, MsgBoxStyle.Critical + MsgBoxStyle.OkOnly)
 
         End Try
-        
+
     End Sub
 
     Public Sub showprogressbar()

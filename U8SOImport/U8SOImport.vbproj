@@ -138,6 +138,12 @@
     <Compile Include="waitForm.vb">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="ExcelLoad2.Designer.vb">
+      <DependentUpon>ExcelLoad2.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ExcelLoad2.vb">
+      <SubType>Form</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="ExcelLoad.resx">
@@ -160,6 +166,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="waitForm.resx">
       <DependentUpon>waitForm.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ExcelLoad2.resx">
+      <DependentUpon>ExcelLoad2.vb</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
