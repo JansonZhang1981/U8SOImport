@@ -13,6 +13,7 @@ Public Class ExcelLoad2
     Public info As String
     Public excConn As OleDbConnection
     Public dt As DataTable
+    Public newdt As DataTable
     Public fd(5) As String
     Private Sub ExcelLoad_Load(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Load
         'GroupBox1.Text = cus.ccusabbname
@@ -56,7 +57,7 @@ Public Class ExcelLoad2
             End If
 
         Next
-
+        '  newdt = tempdt()
 
         j = 0
 
@@ -100,35 +101,25 @@ Public Class ExcelLoad2
         j = 0
     End Sub
     Public Sub showSO1(ByVal i As Integer)
-       
+        DataGridView1.Rows.Clear()
+
         info = "第" + (i + 1).ToString + "页；共" + SMains.Length.ToString + "页"
 
         Label7.Text = info
         '    TextBox1.Text = SOMains(i).cusSONo
 
         TextBox3.Text = SMains(i).dhf
-        Dim dv As DataView = New DataView(dt)
-        dv.RowFilter = "F1 = '" + SMains(i).dhf + "'"
+
+        Dim dv As DataView = New DataView(newdt)
+        dv.RowFilter = "dhf = '" + SMains(i).dhf + "'"
         Dim dt2 As DataTable = dv.ToTable()
-
-        Dim j, k As Integer
-
+        Dim j As Integer
         For j = 0 To dt2.Rows.Count - 1
-            Dim pn As String = dt2.Rows(j)("F2").ToString
+            Dim index As Integer = DataGridView1.Rows.Add()
+            DataGridView1.Rows(index).Cells(0).Value = dt2.Rows(j)("partno").ToString
 
-            For k = 0 To 5
-                Dim x As Integer = k + 3
-                Dim col As String = "F" + CStr(x)
-                If dt2.Rows(j)(col).ToString <> "" Then
-                    Dim index As Integer = DataGridView1.Rows.Add()
-                    DataGridView1.Rows(index).Cells(0).Value = pn
-
-                    DataGridView1.Rows(index).Cells(1).Value = dt2.Rows(j)(col).ToString
-                    DataGridView1.Rows(index).Cells(2).Value = fd(k)
-
-                End If
-
-            Next
+            DataGridView1.Rows(index).Cells(1).Value = dt2.Rows(j)("sl").ToString
+            DataGridView1.Rows(index).Cells(2).Value = dt2.Rows(j)("sdate").ToString
 
         Next
 
@@ -190,30 +181,33 @@ Public Class ExcelLoad2
             domHead(0).SetValue("cdepcode", "07")   '部门编码，String类型
             domHead(0).SetValue("iexchrate", "1")   '汇率，Double类型
             domHead(0).SetValue("cdefine10", SMains(i).dhf)   '到货方，String类型
-            domHead(0).SetValue("cdefine11", SMains(i).cusSONo)   '客户订单号，String类型
-            domHead(0).SetValue("cdefine12", SMains(i).yhf)   '要货方，String类型
-            domHead(0).SetValue("cdefine13", SMains(i).dhck)   '到货仓库，String类型
+         
 
             Dim domBody As BusinessObject
             domBody = u8apiBroker.GetBoParam("domBody")
             ' domBody.RowCount = 10 '设置BO对象(表体)行数为多行
-            Dim d3Cmd As New OleDb.OleDbCommand
-            d3Cmd.CommandText = "select * from [Sheet1$]  where 订单号 ='" + SMains(i).cusSONo + "'"
-            d3Cmd.Connection = excConn
-            Dim d3r As OleDbDataReader
-            d3r = d3Cmd.ExecuteReader
+
+
+            Dim dv As DataView = New DataView(newdt)
+            dv.RowFilter = "dhf = '" + SMains(i).dhf + "'"
+            Dim dt2 As DataTable = dv.ToTable()
+            Dim j As Integer
             Dim y As Integer = 0
-            Do While d3r.Read
-                Dim inv As New Inventory(d3r("零件号").ToString)
-                Dim quantity As String = d3r("订货数量").ToString
+            For j = 0 To dt2.Rows.Count - 1
+
+                Dim inv As New Inventory(dt2.Rows(j)("partno").ToString)
+                Dim quantity As String = dt2.Rows(j)("sl").ToString
+                Dim yfhrq As String = dt2.Rows(j)("sdate").ToString
+
+
                 '****************************** 以下是必输字段 *****************************
                 '’  domBody(y).SetValue("isosid", "字段值")   '主关键字段，Integer类型
                 domBody(y).SetValue("cinvname", inv.cInvName)   '存货名称，String类型
                 domBody(y).SetValue("cinvcode", inv.cInvCode)   '存货编码，String类型
                 '  domBody(y).SetValue("autoid", "字段值")   '销售订单 2，Integer类型
                 domBody(y).SetValue("iquantity", quantity)   '数量，Double类型
-                domBody(y).SetValue("dpredate", "2016-4-20")   '预发货日期，Date类型
-                domBody(y).SetValue("dpremodate", "2016-4-19")   '预完工日期，Date类型
+                domBody(y).SetValue("dpredate", yfhrq)   '预发货日期，Date类型
+                domBody(y).SetValue("dpremodate", yfhrq)   '预完工日期，Date类型
                 domBody(y).SetValue("id", "100000002")   '主表id，Integer类型
                 'domBody(y).SetValue("iinvexchrate", "字段值")   '换算率，Double类型
                 'domBody(y).SetValue("cunitid", "字段值")   '销售单位编码，String类型
@@ -225,7 +219,8 @@ Public Class ExcelLoad2
                 domBody(y).SetValue("editprop", "A")   '编辑属性：A表新增，M表修改，D表删除，String类型
                 y += 1
                 v = y
-            Loop
+
+            Next
 
 
             '给普通参数VoucherState赋值。此参数的数据类型为Integer，此参数按值传递，表示状态:0增加;1修改
@@ -302,4 +297,47 @@ ErrHandler:
         If pr.ShowDialog = Windows.Forms.DialogResult.Cancel Then Exit Sub
 
     End Sub
+
+    Public Function tempdt() As DataTable
+
+        Dim tdt As DataTable = New DataTable("temp_table")
+        tdt.Columns.Add("dhf", System.Type.GetType("System.String"))
+        tdt.Columns.Add("partno", System.Type.GetType("System.String"))
+        tdt.Columns.Add("sl", System.Type.GetType("System.String"))
+
+        tdt.Columns.Add("sdate", System.Type.GetType("System.String"))
+
+        Dim dv As DataView = New DataView(dt)
+        For i = 0 To SMains.Length - 1
+            dv.RowFilter = "F1 = '" + SMains(i).dhf + "'"
+            Dim dt2 As DataTable = dv.ToTable()
+
+            Dim j, k As Integer
+
+            For j = 0 To dt2.Rows.Count - 1
+                Dim pn As String = dt2.Rows(j)("F2").ToString
+
+                For k = 0 To 5
+                    Dim x As Integer = k + 3
+                    Dim col As String = "F" + CStr(x)
+                    If dt2.Rows(j)(col).ToString <> "" Then
+
+                        Dim newrow As DataRow = tdt.NewRow
+                        newrow("dhf") = SMains(i).dhf
+                        newrow("partno") = pn
+                        newrow("sl") = dt2.Rows(j)(col).ToString
+                        newrow("sdate") = fd(k)
+                        tdt.Rows.Add(newrow)
+
+                    End If
+
+                Next
+
+            Next
+
+        Next
+
+        Return tdt
+
+    End Function
 End Class
