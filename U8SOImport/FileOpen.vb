@@ -4,10 +4,12 @@ Public Class FileOpen
 
     Private Sub FileOpen_Load(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Load
         'conn.ConnectionString = connstr
-        conn.Open()
+        Dim excCon As New OleDbConnection
+        excCon.ConnectionString = u8login.UfDbName
+        excCon.Open()
         Dim cmd As New OleDbCommand
         cmd.CommandText = "select ccuscode,ccusname,ccusabbname from Customer"
-        cmd.Connection = conn
+        cmd.Connection = excCon
         Dim myread As OleDbDataReader = cmd.ExecuteReader
 
         Do While myread.Read
@@ -15,7 +17,7 @@ Public Class FileOpen
 
             ComboBox1.Items.Add(it)
         Loop
-        conn.Close()
+        excCon.Close()
     End Sub
     Private Sub Button1_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button1.Click
         If OpenFileDialog1.ShowDialog() = Windows.Forms.DialogResult.OK Then
@@ -36,9 +38,17 @@ Public Class FileOpen
             cus = ComboBox1.SelectedItem
             ' MsgBox(cus.Value)
             Me.Hide()
-            Dim elForm As New ExcelLoad
+            '   Dim elForm As New ExcelLoad
+            If RadioButton1.Checked Then
+                Dim elForm As New ExcelLoad
+                elForm.Show()
+            Else
+                Dim elForm As New ExcelLoad2
+                elForm.Show()
+            End If
 
-            elForm.Show()
+
+
         End If
 
     End Sub

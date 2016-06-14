@@ -9,7 +9,7 @@ Imports System.Data.OleDb
 Module util
     Public u8login As U8Login.clsLogin
     Public connstr As String
-    Public conn As New OleDbConnection
+    Public conn As New ADODB.Connection
     Public filename As String
     Public cus As item
 
@@ -23,6 +23,10 @@ Module util
 
         End If
 
+    End Function
+
+    Public Function setAttribute(ByVal nd As IXMLDOMElement, ByVal name As String, ByVal value As Object) As Boolean
+        nd.setAttribute(name, CStr(value))
     End Function
 
 End Module

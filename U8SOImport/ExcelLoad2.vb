@@ -14,7 +14,7 @@ Public Class ExcelLoad2
     Public excConn As OleDbConnection
     Public dt As DataTable
     Public newdt As DataTable
-    Public fd(5) As String
+    Public fd() As String
     Private Sub ExcelLoad_Load(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Load
         'GroupBox1.Text = cus.ccusabbname
 
@@ -30,24 +30,52 @@ Public Class ExcelLoad2
                 My.Computer.Registry.SetValue("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Office\12.0\Access Connectivity Engine\Engines\Excel", "TypeGuessRows", 0, Microsoft.Win32.RegistryValueKind.DWord)
             End If
         End If
-        filename = "C:/123.xls"
+        '  filename = "C:/123.xls"
+        Dim n As Integer = 0
+
         Dim _Connectstring = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=<FilePath>;Extended Properties=""Excel 8.0;HDR=NO;IMEX=1"""
         excConn = New OleDb.OleDbConnection(_Connectstring.Replace("<FilePath>", filename))
         excConn.Open()
         dt = New DataTable()
         Dim Sql As String = "select * from [Sheet1$] where F1 is not null"
-        Dim mycommand As OleDbDataAdapter = New OleDbDataAdapter(Sql, excConn)
-        mycommand.Fill(dt)
-        fd(0) = dt.Rows(0)("F3").ToString
-        fd(1) = dt.Rows(0)("F4").ToString
-        fd(2) = dt.Rows(0)("F5").ToString
-        fd(3) = dt.Rows(0)("F6").ToString
-        fd(4) = dt.Rows(0)("F7").ToString
-        fd(5) = dt.Rows(0)("F8").ToString
+        Try
+            Dim mycommand As OleDbDataAdapter = New OleDbDataAdapter(Sql, excConn)
+            mycommand.Fill(dt)
+
+            If Not IsDate(dt.Rows(0)("F3").ToString()) Then
+                excConn.Close()
+                MsgBox("请选择正确的导入文件!")
+
+                Exit Sub
+            End If
+
+
+            For i = 3 To dt.Columns.Count
+                ReDim Preserve fd(n)
+                If dt.Rows(0)("F" + CStr(i)).ToString <> "" Then
+                    fd(n) = dt.Rows(0)("F" + CStr(i)).ToString()
+                    n += 1
+                Else
+                    Exit For
+
+                End If
+            Next
+        Catch ex As Exception
+            excConn.Close()
+            MsgBox("请选择正确的导入文件!")
+
+        End Try
+
+        'fd(0) = dt.Rows(0)("F3").ToString
+        'fd(1) = dt.Rows(0)("F4").ToString
+        'fd(2) = dt.Rows(0)("F5").ToString
+        'fd(3) = dt.Rows(0)("F6").ToString
+        'fd(4) = dt.Rows(0)("F7").ToString
+        'fd(5) = dt.Rows(0)("F8").ToString
 
         Dim dv As DataView = New DataView(dt)
         Dim dt2 As DataTable = dv.ToTable(True, "F1")
-        Dim n As Integer = 0
+        n = 0
         For i = 0 To dt2.Rows.Count - 1
             If dt2.Rows(i)("F1").ToString <> "到货工厂代码" Then
                 ReDim Preserve SMains(n)
@@ -57,7 +85,7 @@ Public Class ExcelLoad2
             End If
 
         Next
-        '  newdt = tempdt()
+        newdt = tempdt()
 
         j = 0
 
@@ -74,7 +102,7 @@ Public Class ExcelLoad2
             Button6.Enabled = False
         End If
 
-       
+
     End Sub
 
     Private Sub Button2_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button2.Click
@@ -147,6 +175,178 @@ Public Class ExcelLoad2
     Private Sub SOImport()
         On Error GoTo ErrHandler
         Dim v As Integer
+        Dim x As Integer = 0 - CInt(TextBox1.Text)
+
+        For i = 0 To SMains.Length - 1
+            Dim u8EnvCtx As New U8EnvContext
+            u8EnvCtx.U8Login = u8login
+
+            '设置上下文参数
+            u8EnvCtx.SetApiContext("VoucherType", 12)  '上下文数据类型：int，含义：单据类型：12
+
+            '第三步：构造ApiBroker对象,调用Connect,传入Api的地址标识(Url)，传入上下文
+            Dim u8apiBroker As New U8ApiComBroker
+
+            u8apiBroker.Connect("U8API/SaleOrder/Save", u8EnvCtx)
+
+            '给BO表头参数DomHead赋值，此BO参数的业务类型为采购订单，属表头参数。BO参数均按引用传递
+            '提示：给BO表头参数DomHead赋值有两种方法
+            '方法一是直接传入MSXML2.DOMDocument对象
+            Dim domHead As New MSXML2.DOMDocument   '单据表头DOM
+            Dim domBody As New MSXML2.DOMDocument   '单据表体DOM
+            Dim eleHead As IXMLDOMElement
+            Dim eleBody As IXMLDOMElement
+            Dim ele As IXMLDOMElement
+            Dim rs As New ADODB.Recordset
+            Dim strSQL As String
+            Dim strSOID As String
+
+            rs.CursorLocation = ADODB.CursorLocationEnum.adUseClient
+
+            '查询采购订单表头视图，获取表头DOM结构
+            '如果有表头扩展自定义项，则可以关联PO_Pomain_extradefine表
+            'editprop（单据编辑属性）：A表新增单据，M表修改单据，D表删除单据
+            '新增时只需要一个空的DOM结构，所以查询条件为where 1=0
+            strSQL = "select * from SaleOrderQ where 1=0"
+            rs.Open(strSQL, conn, ADODB.CursorTypeEnum.adOpenForwardOnly, ADODB.LockTypeEnum.adLockReadOnly)
+            rs.Save(domHead, ADODB.PersistFormatEnum.adPersistXML)
+            rs.Close()
+
+            '增加表头数据节点z:row
+            eleHead = domHead.selectSingleNode("//rs:data")
+            ele = domHead.createElement("z:row")
+            eleHead.appendChild(ele)
+
+            strSOID = "0"
+
+
+            '给BO对象(表头)的字段赋值，值可以是真实类型，也可以是无类型字符串
+            '****************************** 以下是必输字段 *****************************
+
+            setAttribute(ele, "id", "0000000001")   '主关键字段，Integer类型
+            setAttribute(ele, "csocode", "0000000001")   '订 单 号，String类型
+            setAttribute(ele, "ddate", Format(Now(), "yyyy-MM-dd"))   '订单日期，Date类型
+            setAttribute(ele, "cbustype", "普通销售")   '业务类型，Integer类型
+            setAttribute(ele, "cstname", "普通销售")   '销售类型，String类型
+            setAttribute(ele, "ccusabbname", cus.ccusabbname)   '客户简称，String类型
+            setAttribute(ele, "ccuscode", cus.ccuscode)   '客户编码，String类型
+            setAttribute(ele, "ccusname", cus.ccusname)   '客户名称，String类型
+            setAttribute(ele, "cdepname", "市场部")   '销售部门，String类型
+            setAttribute(ele, "itaxrate", "17")   '税率，Double类型
+            setAttribute(ele, "cexch_name", "人民币")   '币种，String类型
+            setAttribute(ele, "cmaker", u8login.cUserName)   '制单人，String类型
+            setAttribute(ele, "cstcode", "01")   '销售类型编号，String类型
+            setAttribute(ele, "cdepcode", "07")   '部门编码，String类型
+            setAttribute(ele, "iexchrate", "1")   '汇率，Double类型
+            setAttribute(ele, "cdefine10", SMains(i).dhf)   '到货方，String类型
+
+
+            u8apiBroker.AssignNormalValue("DomHead", domHead)
+
+            strSQL = "select * from SaleOrderSQ where 1=0"
+            rs.Open(strSQL, conn, ADODB.CursorTypeEnum.adOpenForwardOnly, ADODB.LockTypeEnum.adLockReadOnly)
+            rs.Save(domBody, ADODB.PersistFormatEnum.adPersistXML)
+            rs.Close()
+            rs = Nothing
+
+
+            '增加表体数据节点z:row
+            eleBody = domBody.selectSingleNode("//rs:data")
+
+            Dim dv As DataView = New DataView(newdt)
+            dv.RowFilter = "dhf = '" + SMains(i).dhf + "'"
+            Dim dt2 As DataTable = dv.ToTable()
+            Dim j As Integer
+            Dim y As Integer = 0
+            '  MsgBox(dt2.Rows.Count)
+            For j = 0 To dt2.Rows.Count - 1
+                ele = domBody.createElement("z:row")
+                eleBody.appendChild(ele)
+
+                Dim inv As New Inventory(dt2.Rows(j)("partno").ToString)
+                Dim quantity As String = dt2.Rows(j)("sl").ToString
+                Dim yfhrq As String = dt2.Rows(j)("sdate").ToString
+                yfhrq = DateAdd("d", x, yfhrq)
+                If DateDiff("d", Format(Now(), "yyyy-MM-dd"), yfhrq) < 0 Then
+                    yfhrq = Format(Now(), "yyyy-MM-dd")
+                End If
+                '****************************** 以下是必输字段 *****************************
+                '’ setAttribute(ele,"isosid", "字段值")   '主关键字段，Integer类型
+                setAttribute(ele, "cinvname", inv.cInvName)   '存货名称，String类型
+                setAttribute(ele, "cinvcode", inv.cInvCode)   '存货编码，String类型
+                ' setAttribute(ele,"autoid", "字段值")   '销售订单 2，Integer类型
+                setAttribute(ele, "iquantity", quantity)   '数量，Double类型
+                setAttribute(ele, "dpredate", yfhrq)   '预发货日期，Date类型
+                setAttribute(ele, "dpremodate", yfhrq)   '预完工日期，Date类型
+                setAttribute(ele, "id", "0000000001")   '主表id，Integer类型
+                'domBody(y).SetValue("iinvexchrate", "字段值")   '换算率，Double类型
+                'domBody(y).SetValue("cunitid", "字段值")   '销售单位编码，String类型
+                'domBody(y).SetValue("cinva_unit", "字段值")   '销售单位，String类型
+                setAttribute(ele, "cinvm_unit", inv.cComUnitCode)   '主计量单位，String类型
+                'domBody(y).SetValue("igrouptype", "字段值")   '单位类型，Integer类型
+                setAttribute(ele, "cgroupcode", inv.cGroupCode)   '计量单位组，String类型
+                'domBody(y).SetValue("dreleasedate", "字段值")   '预留失效日期，Date类型
+                setAttribute(ele, "editprop", "A")   '编辑属性：A表新增，M表修改，D表删除，String类型
+
+                y += 1
+                v = y
+
+            Next
+
+            u8apiBroker.AssignNormalValue("domBody", domBody)
+
+            '给普通参数VoucherState赋值。此参数的数据类型为Integer，此参数按值传递，表示状态:0增加;1修改
+            u8apiBroker.AssignNormalValue("VoucherState", 0)  '参数类型：Integer
+
+            '该参数vNewID为INOUT型普通参数。此参数的数据类型为String，此参数按值传递。在API调用返回时，可以通过GetResult("vNewID")获取其值
+            u8apiBroker.AssignNormalValue("vNewID", "000000002")  '参数类型：String
+
+            '给普通参数DomConfig赋值。此参数的数据类型为MSXML2.IXMLDOMDocument2，此参数按引用传递，表示ATO,PTO选配
+            Dim CurDom As New DOMDocument
+            u8apiBroker.AssignNormalValue("DomConfig", CurDom)  '参数类型：MSXML2.IXMLDOMDocument2
+
+            '第五步：调用API
+            If u8apiBroker.InvokeApi() = False Then
+                MsgBox(u8apiBroker.GetLastError())
+                '第六步：错误处理
+                If u8apiBroker.ErrorType = ExceptionType.Business Then
+
+                    '处理API业务错误
+                ElseIf u8apiBroker.ErrorType = ExceptionType.System Then
+
+                    '处理系统错误
+                End If
+            Else
+                '第七步：获取返回结果
+
+                '获取返回值
+                '获取普通返回值。此返回值数据类型为String，此参数按值传递，表示成功为空串
+                Dim result As String
+                result = CStr(u8apiBroker.GetReturnValue())
+                '获取out/inout参数值
+
+                '获取普通INOUT参数vNewID。此返回值数据类型为String，在使用该参数之前，请判断是否为空
+                Dim vNewIDRet As String
+                vNewIDRet = CStr(u8apiBroker.GetResult("vNewID"))
+
+            End If
+            '结束本次调用，释放API资源
+            u8apiBroker.Disconnect()
+
+            u8apiBroker = Nothing
+        Next
+
+        'MsgBox("导入成功", MsgBoxStyle.OkOnly, "提示")
+        Button1.Enabled = False
+        excConn.Close()
+        Exit Sub
+ErrHandler:
+        '   MsgBox(v)
+        MsgBox(Err.Description)
+    End Sub
+    Private Sub SOImport1()
+        On Error GoTo ErrHandler
+        Dim v As Integer
 
         For i = 0 To SMains.Length - 1
             Dim u8EnvCtx As New U8EnvContext
@@ -181,7 +381,6 @@ Public Class ExcelLoad2
             domHead(0).SetValue("cdepcode", "07")   '部门编码，String类型
             domHead(0).SetValue("iexchrate", "1")   '汇率，Double类型
             domHead(0).SetValue("cdefine10", SMains(i).dhf)   '到货方，String类型
-         
 
             Dim domBody As BusinessObject
             domBody = u8apiBroker.GetBoParam("domBody")
@@ -317,7 +516,7 @@ ErrHandler:
             For j = 0 To dt2.Rows.Count - 1
                 Dim pn As String = dt2.Rows(j)("F2").ToString
 
-                For k = 0 To 5
+                For k = 0 To fd.Length - 1
                     Dim x As Integer = k + 3
                     Dim col As String = "F" + CStr(x)
                     If dt2.Rows(j)(col).ToString <> "" Then
@@ -340,4 +539,12 @@ ErrHandler:
         Return tdt
 
     End Function
+
+    Private Sub TextBox1_KeyPress(ByVal sender As Object, ByVal e As System.Windows.Forms.KeyPressEventArgs) Handles TextBox1.KeyPress
+        If Char.IsDigit(e.KeyChar) Or e.KeyChar = Chr(8) Then
+            e.Handled = False
+        Else
+            e.Handled = True
+        End If
+    End Sub
 End Class

@@ -21,10 +21,15 @@ Public Class LoginForm
             MsgBox("登陆失败，原因：" + u8login.ShareString)
         Else
             connstr = u8login.UfDbName
-            conn.ConnectionString = connstr
+            conn = New ADODB.Connection
+            'conn.ConnectionString = connstr
+            conn.CursorLocation = ADODB.CursorLocationEnum.adUseClient
+            conn.Open(connstr)
+           
+
             Me.Hide()
             FileOpen.Show()
-            'Form1.Show()
+            '   Form1.Show()
         End If
 
         '  Me.Close()

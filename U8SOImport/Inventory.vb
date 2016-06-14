@@ -9,10 +9,12 @@ Public Class Inventory
 
     Public Sub New(ByVal th As String)
         Me.cInvAddCode = th
-        conn.Open()
+        Dim excCon As New OleDbConnection
+        excCon.ConnectionString =U8Login.UfDbName 
+        excCon.Open()
         Dim cmd As New OleDbCommand
         cmd.CommandText = "select * from Inventory where cInvAddCode='" + cInvAddCode + "' order by cInvCCode"
-        cmd.Connection = conn
+        cmd.Connection = excCon
         Dim myread As OleDbDataReader = cmd.ExecuteReader
 
         If myread.Read Then
@@ -22,7 +24,7 @@ Public Class Inventory
             Me.cComUnitCode = myread("cComUnitCode").ToString
         End If
 
-        conn.Close()
+        excCon.Close()
     End Sub
 
 End Class

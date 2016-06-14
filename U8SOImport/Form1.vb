@@ -435,11 +435,269 @@ Public Class Form1
     End Sub
 
     Private Sub Button3_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button3.Click
-        Dim a(3) As String
-        a(0) = "0"
-        a(1) = "1"
-        a(2) = "2"
-        a(3) = "3"
-        MsgBox(a(3))
+        Dim x As Date = TextBox1.Text
+        Dim y As Integer = 0 - CInt(TextBox3.Text)
+        x = DateAdd("d", y, x)
+        TextBox2.Text = x
+    End Sub
+
+    Private Sub Button4_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button4.Click
+        On Error GoTo ErrHandler
+
+        ''第一步：构造u8login对象并登陆
+        ''如果当前环境中有login对象则可以省去第一步
+        'Dim ologin As Object
+        'Set ologin = CreateObject("U8Login.clsLogin")
+        'If Not ologin.login("AS", strAccID, strYear, strUserID, strPwd, strDate, strServer) Then
+
+        '第二步：构造环境上下文对象，传入login，并按需设置其它上下文参数
+        Dim u8EnvCtx As New U8EnvContext
+        u8EnvCtx.U8Login = u8login
+
+        '采购所有接口均支持内部独立事务和外部事务，默认内部事务
+        '如果是外部事务，则需要传递ADO.Connection对象，并将IsIndependenceTransaction设置为false
+        'Dim bizDbConn As New ADO.Connection
+        'Set u8EnvCtx.BizDbConnection = bizDbConn
+        'u8EnvCtx.IsIndependenceTransaction = false
+
+        '设置上下文参数
+        u8EnvCtx.SetApiContext("VoucherType", "1")       '上下文数据类型：int，含义：单据类型，采购订单 1
+        u8EnvCtx.SetApiContext("bPositive", "True")      '上下文数据类型：bool，含义：红蓝标识：True,蓝字
+        u8EnvCtx.SetApiContext("sBillType", "")          '上下文数据类型：string，含义：为空串
+        u8EnvCtx.SetApiContext("sBusType", "普通采购")   '上下文数据类型：string，含义：业务类型：普通采购,直运采购,受托代销
+
+        '第三步：构造ApiBroker对象,调用Connect,传入Api的地址标识(Url)，传入上下文
+        Dim u8apiBroker As New U8ApiComBroker
+        u8apiBroker.Connect("U8API/PurchaseOrder/VoucherSave", u8EnvCtx)
+
+        '第四步：API参数赋值
+
+        '给BO表头参数DomHead赋值，此BO参数的业务类型为采购订单，属表头参数。BO参数均按引用传递
+        '提示：给BO表头参数DomHead赋值有两种方法
+        '方法一是直接传入MSXML2.DOMDocument对象
+        Dim domHead As New MSXML2.DOMDocument   '单据表头DOM
+        Dim domBody As New MSXML2.DOMDocument   '单据表体DOM
+        Dim eleHead As IXMLDOMElement
+        Dim eleBody As IXMLDOMElement
+        Dim ele As IXMLDOMElement
+        Dim rs As New ADODB.Recordset
+        Dim strSQL As String
+        Dim strPOID As String
+        Dim strCode As String
+        'Dim strSysBarCode As String
+        'Dim strBSysBarCode As String
+        Dim i As Integer
+        Dim id As Long
+
+        rs.CursorLocation = ADODB.CursorLocationEnum.adUseClient
+
+        '查询采购订单表头视图zpurpoheader，获取表头DOM结构
+        '如果有表头扩展自定义项，则可以关联PO_Pomain_extradefine表
+        'editprop（单据编辑属性）：A表新增单据，M表修改单据，D表删除单据
+        '新增时只需要一个空的DOM结构，所以查询条件为where 1=0
+        strSQL = "select cast(null as nvarchar(2)) as editprop,* from zpurpoheader where 1=0"
+        rs.Open(strSQL, conn, ADODB.CursorTypeEnum.adOpenForwardOnly, ADODB.LockTypeEnum.adLockReadOnly)
+        rs.Save(domHead, ADODB.PersistFormatEnum.adPersistXML)
+        rs.Close()
+
+        '增加表头数据节点z:row
+        eleHead = domHead.selectSingleNode("//rs:data")
+        ele = domHead.createElement("z:row")
+        eleHead.appendChild(ele)
+
+        strPOID = "0"
+        strCode = TextBox1.Text
+        'strSysBarCode = "||pupo|" & strCode
+
+        '给表头DOM赋值
+        setAttribute(ele, "editprop", "A")               '编辑属性：A表新增，M表修改，D表删除，String类型
+        setAttribute(ele, "ivtid", "8173")               '单据模版号，Integer类型
+        setAttribute(ele, "poid", strPOID)               '主关键字段，Integer类型
+        setAttribute(ele, "cbustype", "普通采购")        '业务类型，Integer类型
+        setAttribute(ele, "dpodate", "2016-06-14")       '日期，Date类型
+        setAttribute(ele, "cpoid", strCode)              '订单编号，String类型
+        setAttribute(ele, "cvencode", "01")               '供货单位编号，String类型
+        setAttribute(ele, "cvenname", "十堰鼎汇贸易有限公司")              '供应商全称，String类型
+        setAttribute(ele, "cvenabbname", "鼎汇")            '供货单位，String类型
+
+        setAttribute(ele, "cexch_name", "人民币")        '币种，String类型
+        setAttribute(ele, "nflat", "1")                  '汇率，Double类型
+        setAttribute(ele, "itaxrate", "17")              '税率，Double类型
+        setAttribute(ele, "idiscounttaxtype", "0")       '扣税类别，Integer类型
+
+        'setAttribute ele, "csysbarcode", strSysBarCode  '单据条码，String类型
+        setAttribute(ele, "cmaker", "demo")              '制单人，String类型
+
+        setAttribute(ele, "chdefine1", "abc")            '表头扩展自定义项1，String类型
+
+        u8apiBroker.AssignNormalValue("DomHead", domHead)
+
+        '方法二是构造BusinessObject对象，具体方法如下：
+        'Dim DomHead As BusinessObject
+        'Set DomHead = u8apiBroker.GetBoParam("DomHead")
+        'DomHead.RowCount = 1 '设置BO对象(表头)行数，只能为一行
+        '给BO对象(表头)的字段赋值，值可以是真实类型，也可以是无类型字符串
+
+
+        '给BO表体参数domBody赋值，此BO参数的业务类型为采购订单，属表体参数。BO参数均按引用传递
+        '提示：给BO表体参数domBody赋值有两种方法
+        '方法一是直接传入MSXML2.DOMDocument对象
+        'Dim domBody As New MSXML2.DOMDocument
+
+        '查询采购订单表体视图zpurpotail，获取表体DOM结构
+        '如果有表体扩展自定义项，则可以关联PO_Podetails_extradefine表
+        'editprop（单据编辑属性）：A表新增单据，M表修改单据，D表删除单据
+        '新增时只需要一个空的DOM结构，所以查询条件为where 1=0
+        strSQL = "select cast(null as nvarchar(2)) as editprop,* from zpurpotail  where 1=0"
+        rs.Open(strSQL, conn, ADODB.CursorTypeEnum.adOpenForwardOnly, ADODB.LockTypeEnum.adLockReadOnly)
+        rs.Save(domBody, ADODB.PersistFormatEnum.adPersistXML)
+        rs.Close()
+        rs = Nothing
+
+        id = 1000000036
+
+        '增加表体数据节点z:row
+        eleBody = domBody.selectSingleNode("//rs:data")
+        '增加两行表体，为了方便编码，两行存货相同，数量不同
+        '只是示例，所以不考虑单价和金额字段
+        For i = 1 To 2
+            ele = domBody.createElement("z:row")
+            eleBody.appendChild(ele)
+
+            id = id + i
+            'strBSysBarCode = strSysBarCode & "|" & i
+
+            '给表体DOM赋值
+            setAttribute(ele, "editprop", "A")                   '编辑属性：A表新增，M表修改，D表删除，String类型
+            setAttribute(ele, "id", id)                          '主关键字段，Integer类型
+            setAttribute(ele, "poid", strPOID)                   '主表id，Integer类型
+            setAttribute(ele, "cinvcode", "3010000003")                 '存货编码，String类型
+            setAttribute(ele, "cinvname", "热板")                '存货名称，String类型
+            setAttribute(ele, "iquantity", 10 * i)               '数量，Double类型
+            setAttribute(ele, "inum", i)                         '件数，Double类型
+            setAttribute(ele, "iinvexchrate", "10")              '换算率，Double类型
+
+            setAttribute(ele, "ccomunitcode", "1")               '主计量编码，String类型
+            setAttribute(ele, "cinvm_unit", "1")                 '主计量，String类型
+            setAttribute(ele, "cunitid", "10")                   '采购单位编码，String类型
+            setAttribute(ele, "cinva_unit", "10")                '采购单位，String类型
+            setAttribute(ele, "igrouptype", "1")                 '分组类型，String类型
+
+            setAttribute(ele, "darrivedate", "9999-09-30")       '计划到货日期，Date类型
+            setAttribute(ele, "ipertaxrate", "17.000000")        '税率，Double类型
+            setAttribute(ele, "btaxcost", "0")                   '单价标准，String类型
+
+            setAttribute(ele, "bgsp", "0")                       '是否检验，Integer类型
+            setAttribute(ele, "sotype", "0")                     '需求跟踪方式，Integer类型
+            setAttribute(ele, "iordertype", "0")                 '销售订单类型，Integer类型
+
+            setAttribute(ele, "ivouchrowno", i)                  '行号，String类型
+            'setAttribute ele, "cbsysbarcode", strBSysBarCode    '单据行条码，String类型
+
+            setAttribute(ele, "cbdefine1", "def" & i)            '表体扩展自定义项1，String类型
+        Next i
+
+
+        u8apiBroker.AssignNormalValue("domBody", domBody)
+
+        '方法二是构造BusinessObject对象，具体方法如下：
+        'Dim domBody As BusinessObject
+        'Set domBody = u8apiBroker.GetBoParam("domBody")
+        'domBody.RowCount = 10 '设置BO对象(表体)行数为多行
+        '可以自由设置BO对象(表体)行数为任意大于零的整数，也可以不设置而自动增加
+        '给BO对象(表体)的字段赋值，值可以是真实类型，也可以是无类型字符串
+        '以下代码示例只设置第一行值。各字段定义详见API服务接口定义
+
+
+        '给普通参数VoucherState赋值。此参数的数据类型为Integer，此参数按值传递，表示单据状态：2新增，1修改，0非编辑
+        u8apiBroker.AssignNormalValue("VoucherState", 2)  '参数类型：Integer
+
+        '该参数curID为OUT型参数，由于其数据类型为String，为一般值类型，因此不必传入一个参数变量。在API调用返回时，可以通过GetResult("curID")获取其值
+
+        '该参数CurDom为OUT型参数，由于其数据类型为MSXML2.IXMLDOMDocument2，非一般值类型，因此必须传入一个参数变量。在API调用返回时，可以直接使用该参数
+        Dim CurDom As New DOMDocument
+        u8apiBroker.AssignNormalValue("CurDom", CurDom)  '参数类型：MSXML2.IXMLDOMDocument2
+
+        '给普通参数UserMode赋值。此参数的数据类型为Integer，此参数按值传递，表示模式，0：CS;1:BS
+        u8apiBroker.AssignNormalValue("UserMode", 0)  '参数类型：Integer
+
+        '第五步：调用API
+        If u8apiBroker.InvokeApi() = False Then
+            '第六步：错误处理
+            MsgBox(u8apiBroker.GetLastError())
+            If u8apiBroker.ErrorType = ExceptionType.Business Then
+                '处理API业务错误
+            ElseIf u8apiBroker.ErrorType = ExceptionType.System Then
+                '处理系统错误
+            End If
+        Else
+            '第七步：获取返回结果
+
+            '获取返回值
+            '获取普通返回值。此返回值数据类型为String，此参数按值传递，表示错误描述：空，正确；非空，错误
+            Dim result As String
+            result = CStr(u8apiBroker.GetReturnValue())
+
+            '获取out/inout参数值
+
+            '获取普通OUT参数curID。此返回值数据类型为String，在使用该参数之前，请判断是否为空
+            Dim curIDRet As String
+            curIDRet = CStr(u8apiBroker.GetResult("curID"))
+
+            '获取普通OUT参数CurDom。此返回值数据类型为MSXML2.IXMLDOMDocument2，前面已定义该参数，请直接使用
+
+            If result = "" Then
+                MsgBox("新增保存成功！", vbInformation, "提示")
+                '   getLastCode()
+            Else
+                MsgBox(result, vbInformation, "提示")
+            End If
+        End If
+
+ExitHandler:
+        '结束本次调用，释放API资源
+        u8apiBroker.Disconnect()
+
+        u8apiBroker = Nothing
+
+        Exit Sub
+ErrHandler:
+        MsgBox(Err.Description, vbInformation, "提示")
+        GoTo ExitHandler
+    End Sub
+
+   
+
+    '获取最后一张采购订单号
+    Private Sub getLastCode()
+        Dim rs As New ADODB.Recordset
+
+        TextBox1.Text = ""
+        rs.CursorLocation = ADODB.CursorLocationEnum.adUseClient
+        rs.Open("select cPOID from PO_Pomain where POID=(select max(POID) from PO_Pomain)", conn, ADODB.CursorTypeEnum.adOpenForwardOnly, ADODB.LockTypeEnum.adLockReadOnly)
+
+        If Not rs.EOF Then
+            TextBox1.Text = rs.Fields("cPOID").Value
+        End If
+        rs.Close()
+        rs = Nothing
+    End Sub
+
+    Private Sub TextBox3_KeyPress(ByVal sender As Object, ByVal e As System.Windows.Forms.KeyPressEventArgs) Handles TextBox1.KeyPress
+        If Char.IsDigit(e.KeyChar) Or e.KeyChar = Chr(8) Then
+            e.Handled = False
+        Else
+            e.Handled = True
+        End If
+    End Sub
+
+    Private Sub TextBox1_TextChanged(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles TextBox1.TextChanged
+
+    End Sub
+
+    Private Sub Button5_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button5.Click
+        Dim c As Integer
+        c = DateDiff("d", Format(Now(), "yyyy-MM-dd"), TextBox2.Text)
+        MsgBox(c)
     End Sub
 End Class
