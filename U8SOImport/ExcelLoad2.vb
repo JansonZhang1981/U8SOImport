@@ -15,6 +15,11 @@ Public Class ExcelLoad2
     Public dt As DataTable
     Public newdt As DataTable
     Public fd() As String
+
+    Private Sub ExcelLoad2_FormClosed(ByVal sender As Object, ByVal e As System.Windows.Forms.FormClosedEventArgs) Handles Me.FormClosed
+        End
+    End Sub
+
     Private Sub ExcelLoad_Load(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Load
         'GroupBox1.Text = cus.ccusabbname
 

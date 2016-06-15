@@ -2,6 +2,10 @@
 Imports System.Data.OleDb
 Public Class FileOpen
 
+    Private Sub FileOpen_FormClosed(ByVal sender As Object, ByVal e As System.Windows.Forms.FormClosedEventArgs) Handles Me.FormClosed
+        End
+    End Sub
+
     Private Sub FileOpen_Load(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Load
         'conn.ConnectionString = connstr
         Dim excCon As New OleDbConnection

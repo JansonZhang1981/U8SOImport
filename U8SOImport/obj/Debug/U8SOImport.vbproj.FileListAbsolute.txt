@@ -39,3 +39,4 @@ C:\Users\zhangjc\Documents\GitHub\U8SOImport\U8SOImport\obj\Debug\Interop.MSXML2
 C:\Users\zhangjc\Documents\GitHub\U8SOImport\U8SOImport\obj\Debug\U8SOImport.vbproj.ResolveComReference.cache
 C:\Users\zhangjc\Documents\GitHub\U8SOImport\U8SOImport\obj\Debug\U8SOImport.waitForm.resources
 C:\Users\zhangjc\Documents\GitHub\U8SOImport\U8SOImport\obj\Debug\U8SOImport.ExcelLoad2.resources
+C:\Users\zhangjc\Documents\GitHub\U8SOImport\U8SOImport\bin\Debug\U8SOImport.exe.config
