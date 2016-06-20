@@ -700,4 +700,9 @@ ErrHandler:
         c = DateDiff("d", Format(Now(), "yyyy-MM-dd"), TextBox2.Text)
         MsgBox(c)
     End Sub
+
+    Private Sub Button6_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button6.Click
+        Dim inv As New Inventory(TextBox2.Text)
+        MsgBox(inv.cInvCode + "+++++" + inv.cInvAddCode)
+    End Sub
 End Class

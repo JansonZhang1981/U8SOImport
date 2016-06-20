@@ -13,7 +13,8 @@ Public Class Inventory
         excCon.ConnectionString =U8Login.UfDbName 
         excCon.Open()
         Dim cmd As New OleDbCommand
-        cmd.CommandText = "select * from Inventory where cInvAddCode='" + cInvAddCode + "' order by cInvCCode"
+        '      cmd.CommandText = "select * from Inventory where cInvAddCode='" + cInvAddCode + "' order by cInvCCode"
+        cmd.CommandText = "select Top 1 * from Inventory where cInvAddCode='" + cInvAddCode + "' and bSale =1 order by cInvCCode"
         cmd.Connection = excCon
         Dim myread As OleDbDataReader = cmd.ExecuteReader
 
