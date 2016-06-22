@@ -42,7 +42,7 @@ Public Class FileOpen
             cus = ComboBox1.SelectedItem
             ' MsgBox(cus.Value)
             Me.Hide()
-            '   Dim elForm As New ExcelLoad
+
             If RadioButton1.Checked Then
                 Dim elForm As New ExcelLoad
                 elForm.Show()
@@ -50,6 +50,8 @@ Public Class FileOpen
                 Dim elForm As New ExcelLoad2
                 elForm.Show()
             End If
+
+            '    Form1.Show()
 
 
 

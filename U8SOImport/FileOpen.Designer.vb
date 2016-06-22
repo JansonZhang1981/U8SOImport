@@ -119,6 +119,7 @@ Partial Class FileOpen
         Me.Name = "FileOpen"
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
         Me.Text = "选择文件"
+        Me.TopMost = True
         Me.ResumeLayout(False)
         Me.PerformLayout()
 

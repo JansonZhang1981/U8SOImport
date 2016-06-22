@@ -34,13 +34,26 @@ Public Class ExcelLoad
             End If
         End If
 
-        Dim _Connectstring = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=<FilePath>;Extended Properties=""Excel 8.0;HDR=YES;IMEX=1"""
-        excConn = New OleDb.OleDbConnection(_Connectstring.Replace("<FilePath>", filename))
-        excConn.Open()
+        Try
+            Dim _Connectstring = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=<FilePath>;Extended Properties=""Excel 8.0;HDR=YES;IMEX=1"""
+            excConn = New OleDb.OleDbConnection(_Connectstring.Replace("<FilePath>", filename))
+            excConn.Open()
+
+        Catch ex As Exception
+            MsgBox(ex.Message)
+            Exit Sub
+
+
+        End Try
+
+
         Dim dCmd As New OleDb.OleDbCommand
         dCmd.CommandText = "select distinct 订单号 from [Sheet1$]  where 订单号 is not null"
         dCmd.Connection = excConn
+
+
         Try
+
             Dim dr As OleDbDataReader
             dr = dCmd.ExecuteReader
             Dim i As Integer = 0
@@ -50,6 +63,7 @@ Public Class ExcelLoad
                 d2cmd.Connection = excConn
                 Dim d2r As OleDbDataReader
                 d2r = d2cmd.ExecuteReader
+
                 Do While d2r.Read
                     ReDim Preserve SOMains(i)
                     Dim sm As New SOMain(d2r("订单号").ToString, d2r("到货方").ToString, d2r("要货方").ToString, d2r("到货仓库").ToString, Format(CDate(d2r("订单接收时间").ToString), "yyyy-MM-dd"), Format(CDate(d2r("要求到货时间").ToString), "yyyy-MM-dd"))
@@ -58,9 +72,13 @@ Public Class ExcelLoad
                 Loop
             Loop
 
+
+
         Catch ex As Exception
+            MsgBox(ex.Message)
             excConn.Close()
             MsgBox("请注意Sheet名是否为Sheet1！")
+           Exit Sub
         End Try
 
         j = 0
@@ -97,7 +115,9 @@ Public Class ExcelLoad
         Thread.Sleep(0)
         SOImport()
         t.Abort()
-        MsgBox("导入成功", MsgBoxStyle.OkOnly, "提示")
+        '  MsgBox("导入成功", MsgBoxStyle.OkOnly, "提示")
+        msg = "导入成功"
+        popmsgbox.Show()
 
 
     End Sub
@@ -252,7 +272,11 @@ Public Class ExcelLoad
 
                 Dim inv As New Inventory(d3r("零件号").ToString)
                 Dim quantity As String = d3r("订货数量").ToString
-                Dim yfhrq As String = Format(d3r("要求到货时间").ToString, "yyyy-MM-dd")
+                Dim yfhrq As String = Format(CDate(d3r("要求到货时间").ToString), "yyyy-MM-dd")
+                If DateDiff("d", Format(Now(), "yyyy-MM-dd"), yfhrq) < 0 Then
+                    yfhrq = Format(Now(), "yyyy-MM-dd")
+                End If
+                '  Dim yfhrq As String = Format("2016-6-22  0:00:00", "yyyy-MM-dd")
                 '****************************** 以下是必输字段 *****************************
                 '’ setAttribute(ele,"isosid", "字段值")   '主关键字段，Integer类型
                 setAttribute(ele, "cinvname", inv.cInvName)   '存货名称，String类型

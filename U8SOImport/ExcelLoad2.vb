@@ -38,37 +38,31 @@ Public Class ExcelLoad2
         '  filename = "C:/123.xls"
         Dim n As Integer = 0
 
-        Dim _Connectstring = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=<FilePath>;Extended Properties=""Excel 8.0;HDR=NO;IMEX=1"""
+        Dim _Connectstring = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=<FilePath>;Extended Properties=""Excel 8.0;HDR=YES;IMEX=1"""
         excConn = New OleDb.OleDbConnection(_Connectstring.Replace("<FilePath>", filename))
         excConn.Open()
         dt = New DataTable()
-        Dim Sql As String = "select * from [Sheet1$] where F1 is not null"
+        Dim Sql As String = "select * from [Sheet1$]"
         Try
             Dim mycommand As OleDbDataAdapter = New OleDbDataAdapter(Sql, excConn)
             mycommand.Fill(dt)
 
-            If Not IsDate(dt.Rows(0)("F3").ToString()) Then
+            If Not IsDate(dt.Columns(2).ColumnName) Then
                 excConn.Close()
                 MsgBox("请选择正确的导入文件!")
-
                 Exit Sub
             End If
 
-
-            For i = 3 To dt.Columns.Count
+            For i = 2 To dt.Columns.Count - 1
                 ReDim Preserve fd(n)
-                If dt.Rows(0)("F" + CStr(i)).ToString <> "" Then
-                    fd(n) = dt.Rows(0)("F" + CStr(i)).ToString()
-                    n += 1
-                Else
-                    Exit For
-
-                End If
+                fd(n) = dt.Columns(i).ColumnName
+                n += 1
             Next
+           
         Catch ex As Exception
             excConn.Close()
             MsgBox("请选择正确的导入文件!")
-
+            '   Exit Sub
         End Try
 
         'fd(0) = dt.Rows(0)("F3").ToString
@@ -79,16 +73,17 @@ Public Class ExcelLoad2
         'fd(5) = dt.Rows(0)("F8").ToString
 
         Dim dv As DataView = New DataView(dt)
-        Dim dt2 As DataTable = dv.ToTable(True, "F1")
+        Dim dt2 As DataTable = dv.ToTable(True, "到货工厂代码")
         n = 0
         For i = 0 To dt2.Rows.Count - 1
-            If dt2.Rows(i)("F1").ToString <> "到货工厂代码" Then
+            If dt2.Rows(i)("到货工厂代码").ToString <> "" Then
+
                 ReDim Preserve SMains(n)
-                Dim sm As New SOMain("", dt2.Rows(i)("F1").ToString, "", "", "", "")
+                Dim sm As New SOMain("", dt2.Rows(i)("到货工厂代码").ToString, "", "", "", "")
                 SMains(n) = sm
                 n += 1
-            End If
 
+            End If
         Next
         newdt = tempdt()
 
@@ -124,7 +119,10 @@ Public Class ExcelLoad2
         Thread.Sleep(0)
         SOImport()
         t.Abort()
-        MsgBox("导入成功", MsgBoxStyle.OkOnly, "提示")
+        '   MsgBox("导入成功", MsgBoxStyle.OkOnly, "提示")
+        msg = "导入成功"
+        popmsgbox.Show()
+
 
 
     End Sub
@@ -181,7 +179,7 @@ Public Class ExcelLoad2
         On Error GoTo ErrHandler
         Dim v As Integer
         Dim x As Integer = 0 - CInt(TextBox1.Text)
-
+      
         For i = 0 To SMains.Length - 1
             Dim u8EnvCtx As New U8EnvContext
             u8EnvCtx.U8Login = u8login
@@ -231,6 +229,7 @@ Public Class ExcelLoad2
             setAttribute(ele, "id", "0000000001")   '主关键字段，Integer类型
             setAttribute(ele, "csocode", "0000000001")   '订 单 号，String类型
             setAttribute(ele, "ddate", Format(Now(), "yyyy-MM-dd"))   '订单日期，Date类型
+            '  setAttribute(ele, "ddate", "2016-06-22")   '订单日期，Date类型
             setAttribute(ele, "cbustype", "普通销售")   '业务类型，Integer类型
             setAttribute(ele, "cstname", "普通销售")   '销售类型，String类型
             setAttribute(ele, "ccusabbname", cus.ccusabbname)   '客户简称，String类型
@@ -245,6 +244,7 @@ Public Class ExcelLoad2
             setAttribute(ele, "iexchrate", "1")   '汇率，Double类型
             setAttribute(ele, "cdefine10", SMains(i).dhf)   '到货方，String类型
 
+     
 
             u8apiBroker.AssignNormalValue("DomHead", domHead)
 
@@ -270,11 +270,12 @@ Public Class ExcelLoad2
 
                 Dim inv As New Inventory(dt2.Rows(j)("partno").ToString)
                 Dim quantity As String = dt2.Rows(j)("sl").ToString
-                Dim yfhrq As String = dt2.Rows(j)("sdate").ToString
+                Dim yfhrq As String = Format(CDate(dt2.Rows(j)("sdate").ToString), "yyyy-MM-dd")
                 yfhrq = DateAdd("d", x, yfhrq)
                 If DateDiff("d", Format(Now(), "yyyy-MM-dd"), yfhrq) < 0 Then
                     yfhrq = Format(Now(), "yyyy-MM-dd")
                 End If
+
                 '****************************** 以下是必输字段 *****************************
                 '’ setAttribute(ele,"isosid", "字段值")   '主关键字段，Integer类型
                 setAttribute(ele, "cinvname", inv.cInvName)   '存货名称，String类型
@@ -292,6 +293,7 @@ Public Class ExcelLoad2
                 setAttribute(ele, "cgroupcode", inv.cGroupCode)   '计量单位组，String类型
                 'domBody(y).SetValue("dreleasedate", "字段值")   '预留失效日期，Date类型
                 setAttribute(ele, "editprop", "A")   '编辑属性：A表新增，M表修改，D表删除，String类型
+
 
                 y += 1
                 v = y
@@ -512,27 +514,25 @@ ErrHandler:
         tdt.Columns.Add("sdate", System.Type.GetType("System.String"))
 
         Dim dv As DataView = New DataView(dt)
-        For i = 0 To SMains.Length - 1
-            dv.RowFilter = "F1 = '" + SMains(i).dhf + "'"
+
+        For i = 0 To 1
+            dv.RowFilter = "到货工厂代码 = '" + SMains(i).dhf + "'"
             Dim dt2 As DataTable = dv.ToTable()
 
             Dim j, k As Integer
 
             For j = 0 To dt2.Rows.Count - 1
-                Dim pn As String = dt2.Rows(j)("F2").ToString
+                Dim pn As String = dt2.Rows(j)("零件号").ToString
 
                 For k = 0 To fd.Length - 1
-                    Dim x As Integer = k + 3
-                    Dim col As String = "F" + CStr(x)
-                    If dt2.Rows(j)(col).ToString <> "" Then
-
+                    If dt2.Rows(j)(dt2.Columns(k + 2).ColumnName).ToString <> "" Then
                         Dim newrow As DataRow = tdt.NewRow
                         newrow("dhf") = SMains(i).dhf
                         newrow("partno") = pn
-                        newrow("sl") = dt2.Rows(j)(col).ToString
-                        newrow("sdate") = fd(k)
-                        tdt.Rows.Add(newrow)
 
+                        newrow("sl") = dt2.Rows(j)(dt2.Columns(k + 2).ColumnName).ToString
+                        newrow("sdate") = dt2.Columns(k + 2).ColumnName
+                        tdt.Rows.Add(newrow)
                     End If
 
                 Next

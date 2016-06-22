@@ -40,3 +40,4 @@ C:\Users\zhangjc\Documents\GitHub\U8SOImport\U8SOImport\obj\Debug\U8SOImport.vbp
 C:\Users\zhangjc\Documents\GitHub\U8SOImport\U8SOImport\obj\Debug\U8SOImport.waitForm.resources
 C:\Users\zhangjc\Documents\GitHub\U8SOImport\U8SOImport\obj\Debug\U8SOImport.ExcelLoad2.resources
 C:\Users\zhangjc\Documents\GitHub\U8SOImport\U8SOImport\bin\Debug\U8SOImport.exe.config
+C:\Users\zhangjc\Documents\GitHub\U8SOImport\U8SOImport\obj\Debug\U8SOImport.popmsgbox.resources

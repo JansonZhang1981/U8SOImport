@@ -16,7 +16,7 @@
             向后兼容性，请删除 requestedExecutionLevel 节点。
         -->
      <!--   <requestedExecutionLevel level="asInvoker" uiAccess="false" /> -->
-        <requestedExecutionLevel level="requireAdministrator" uiAccess="false" />
+        <requestedExecutionLevel level="asInvoker" uiAccess="false" />
       </requestedPrivileges>
     </security>
   </trustInfo>

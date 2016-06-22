@@ -12,6 +12,7 @@ Module util
     Public conn As New ADODB.Connection
     Public filename As String
     Public cus As item
+    Public msg As String
 
     Public Function Is64bit() As Boolean
         If Environment.GetEnvironmentVariable("Program Files(x86)") = "" Then

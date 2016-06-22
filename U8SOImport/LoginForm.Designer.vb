@@ -74,6 +74,7 @@ Partial Class LoginForm
         Me.UsernameTextBox.Name = "UsernameTextBox"
         Me.UsernameTextBox.Size = New System.Drawing.Size(220, 21)
         Me.UsernameTextBox.TabIndex = 1
+        Me.UsernameTextBox.Text = "0018"
         '
         'PasswordTextBox
         '
@@ -122,6 +123,7 @@ Partial Class LoginForm
         Me.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
         Me.Text = "登录"
+        Me.TopMost = True
         CType(Me.LogoPictureBox, System.ComponentModel.ISupportInitialize).EndInit()
         Me.ResumeLayout(False)
         Me.PerformLayout()

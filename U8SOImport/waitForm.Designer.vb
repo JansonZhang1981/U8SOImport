@@ -48,6 +48,7 @@ Partial Class waitForm
         Me.Name = "waitForm"
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
         Me.Text = "等待"
+        Me.TopMost = True
         Me.ResumeLayout(False)
         Me.PerformLayout()
 

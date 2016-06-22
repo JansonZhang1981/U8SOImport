@@ -33,7 +33,7 @@ Public Class LoginForm
 
             Me.Hide()
             FileOpen.Show()
-            'Form1.Show()
+            ' Form1.Show()
         End If
 
         '  Me.Close()
