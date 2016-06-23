@@ -749,8 +749,12 @@ ErrHandler:
     End Sub
 
     Private Sub Button7_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button7.Click
-    
-        CallU8Api()
+        Dim x As String = GetTablename()
+
+        'Dim x As Array = test()
+        'For i = 0 To x.Length - 1
+        '    MsgBox(CStr(i) + "||||||" + x(i).ToString)
+        'Next
    
     End Sub
     Private Sub SOImport()
@@ -993,5 +997,135 @@ ErrHandler:
 ErrHandler:
         MsgBox(Err.Description)
     End Sub
+    Function GetTablename() As String  'i表示第几个sheet，大于0
+        'Dim sConnectionString As String = "Provider=Microsoft.Jet.OLEDB.4.0;Data Source=c:/123.xls;Extended Properties=Excel 8.0;"
+        'Dim cn As OleDbConnection = New OleDbConnection(sConnectionString)
 
+        'cn.Open()
+
+        Dim _Connectstring = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=<FilePath>;Extended Properties=""Excel 8.0;HDR=YES;IMEX=1"""
+        excConn = New OleDb.OleDbConnection(_Connectstring.Replace("<FilePath>", "c:/1.xlsx"))
+        excConn.Open()
+        Dim tb As DataTable = excConn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, New Object() {Nothing, Nothing, Nothing, "TABLE"})
+        For Each row In tb.Rows
+            MsgBox(row.Item(2).ToString())
+        Next
+
+        Return ""
+        '   Return tb.Rows(i - 1)("TABLE_NAME") '第一个
+
+
+    End Function
+    Function test() As Array
+        Dim vList As New List(Of String)
+        Try
+            Dim strConn As String = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=<FilePath>;Extended Properties=""Excel 8.0;HDR=YES;IMEX=1"""
+            Dim conn As OleDbConnection
+            conn = New OleDb.OleDbConnection(strConn.Replace("<FilePath>", "c:/1.xlsx"))
+
+            conn.Open()
+
+            Dim sheetNames As DataTable = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, New Object() {Nothing, Nothing, Nothing, "TABLE"})
+
+            conn.Close()
+            Dim vName As String = String.Empty
+            Dim pOUTPres As New List(Of String)
+
+            For i = 0 To sheetNames.Rows.Count - 1
+                If sheetNames.Rows(i)(2).ToString().Trim().Contains("OUTPres") And i > 0 Then
+                    If sheetNames.Rows(i)(2).ToString().Trim().Contains(sheetNames.Rows(i - 1)(2).ToString().Trim() + "OUTPres") Then
+                        Continue For
+                    End If
+                End If
+                pOUTPres.Add(sheetNames.Rows(i)(2).ToString().Trim())
+            Next
+
+            Dim vSheets As String() = pOUTPres.ToArray()
+            Dim pSheetName As String = String.Empty
+
+
+
+            For i = 0 To vSheets.Length - 1
+                Dim pStart As String = vSheets(i).Substring(0, 1)
+                Dim pEnd As String = vSheets(i).Substring(vSheets(i).Length - 1, 1)
+                If pStart = "'" And pEnd = "'" Then
+                    vSheets(i) = vSheets(i).Substring(1, vSheets(i).Length - 2)
+                End If
+
+                Dim pChar As Char() = vSheets(i).ToCharArray
+                pSheetName = String.Empty
+                For j = 0 To pChar.Length - 1
+                    If j < pChar.Length - 1 Then
+                        If pChar(j).ToString = "'" And pChar(j + 1).ToString = "'" Then
+                            pSheetName += pChar(j).ToString
+                            j = j + 1
+                        Else
+                            pSheetName += pChar(j).ToString
+                        End If
+                    Else
+                        pSheetName += pChar(j).ToString
+                    End If
+
+                Next
+                vSheets(i) = pSheetName
+            Next
+
+
+
+            For i = 0 To vSheets.Length - 1
+                If vList.IndexOf(vSheets(i).ToLower) = -1 Then
+                    vList.Add(vSheets(i))
+                End If
+            Next
+
+            Dim ptList As New List(Of String)
+            For j = 0 To vList.Count - 1
+                ptList.Add(vList(j))
+            Next
+
+
+            For i = 0 To ptList.Count - 1
+                If ptList(i).ToString().Contains("FilterDatabase") Or ptList(i).ToString().Contains("Print_Titles") _
+                     Or ptList(i).ToString().Contains("_xlnm#Database") Or ptList(i).ToString().Contains("Print_Area") _
+                     Or ptList(i).ToString().Contains("_xlnm.Database") Or ptList(i).ToString().Contains("ExternalData") _
+                     Or ptList(i).ToString().Contains("DRUG_IMP_STOCK") Or ptList(i).ToString().Contains("Sheet1$zy") _
+                     Or ptList(i).ToString().Contains("Sheet1$xy") Or ptList(i).ToString().Contains("data_xy_zcy") _
+                     Or ptList(i).ToString().Contains("Results") Then
+
+                    vList.Remove(ptList(i).ToString)
+
+                End If
+
+            Next
+
+            If vList.Count > 1 Then
+                Dim pCheckList As New List(Of String)
+                For j = 0 To vList.Count - 1
+                    pCheckList.Add(vList(j))
+                Next
+                conn.Open()
+                Dim pComm As New OleDbCommand
+                pComm.Connection = conn
+
+                For i = 0 To pCheckList.Count - 1
+                    Try
+                        pComm.CommandText = String.Format("select count(*) from [{0}] where 1=0", pCheckList(i))
+                        pComm.ExecuteNonQuery()
+                    Catch ex As Exception
+                        If ex.Message.Contains("Microsoft Access 数据库引擎找不到对象") Then
+                            vList.Remove(pCheckList(i).ToString)
+                        End If
+
+                    End Try
+                Next
+                conn.Close()
+            End If
+
+        Catch ex As Exception
+
+        End Try
+
+        Return vList.ToArray
+
+    End Function
 End Class

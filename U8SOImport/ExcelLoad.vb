@@ -12,6 +12,7 @@ Public Class ExcelLoad
     Public j As Integer
     Public info As String
     Public excConn As OleDbConnection
+    Public tablename As String
 
     Private Sub ExcelLoad_FormClosed(ByVal sender As Object, ByVal e As System.Windows.Forms.FormClosedEventArgs) Handles Me.FormClosed
         End
@@ -20,6 +21,7 @@ Public Class ExcelLoad
 
     Private Sub ExcelLoad_Load(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Load
         GroupBox1.Text = cus.ccusabbname
+
 
         Dim x As String
         If Not Is64bit() Then
@@ -37,7 +39,15 @@ Public Class ExcelLoad
         Try
             Dim _Connectstring = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=<FilePath>;Extended Properties=""Excel 8.0;HDR=YES;IMEX=1"""
             excConn = New OleDb.OleDbConnection(_Connectstring.Replace("<FilePath>", filename))
-            excConn.Open()
+
+            '  tablename = GetTablenames(excConn)(0)
+          
+            '   MsgBox(GetFirstSheetNameFromExcelFileName(1))
+            tablename = GetFirstSheetNameFromExcelFileName(1) + "$"
+
+            If excConn.State = ConnectionState.Closed Then
+                excConn.Open()
+            End If
 
         Catch ex As Exception
             MsgBox(ex.Message)
@@ -48,7 +58,7 @@ Public Class ExcelLoad
 
 
         Dim dCmd As New OleDb.OleDbCommand
-        dCmd.CommandText = "select distinct 订单号 from [Sheet1$]  where 订单号 is not null"
+        dCmd.CommandText = "select distinct 订单号 from [" + tablename + "]  where 订单号 is not null"
         dCmd.Connection = excConn
 
 
@@ -59,7 +69,7 @@ Public Class ExcelLoad
             Dim i As Integer = 0
             Do While dr.Read
                 Dim d2cmd As New OleDbCommand
-                d2cmd.CommandText = "select top 1 *  from [Sheet1$]  where 订单号 ='" + dr("订单号").ToString + "'"
+                d2cmd.CommandText = "select top 1 *  from [" + tablename + "]  where 订单号 ='" + dr("订单号").ToString + "'"
                 d2cmd.Connection = excConn
                 Dim d2r As OleDbDataReader
                 d2r = d2cmd.ExecuteReader
@@ -78,7 +88,7 @@ Public Class ExcelLoad
             MsgBox(ex.Message)
             excConn.Close()
             MsgBox("请注意Sheet名是否为Sheet1！")
-           Exit Sub
+            Exit Sub
         End Try
 
         j = 0
@@ -141,7 +151,7 @@ Public Class ExcelLoad
         '上两行打开一个读取excel的链接
         '   MsgBox(_Connectstring)
         Dim mydataset As DataSet = New DataSet
-        Using da As OleDb.OleDbDataAdapter = New OleDb.OleDbDataAdapter("select distinct 零件号,零件名称,订货数量 from [Sheet1$] where 订单号='" + SOMains(i).cusSONo + "'", excConn)
+        Using da As OleDb.OleDbDataAdapter = New OleDb.OleDbDataAdapter("select distinct 零件号,零件名称,订货数量 from [" + tablename + "] where 订单号='" + SOMains(i).cusSONo + "'", excConn)
 
             Try
                 dt = New DataTable
@@ -261,7 +271,7 @@ Public Class ExcelLoad
             '增加表体数据节点z:row
             eleBody = domBody.selectSingleNode("//rs:data")
             Dim d3Cmd As New OleDb.OleDbCommand
-            d3Cmd.CommandText = "select * from [Sheet1$]  where 订单号 ='" + SOMains(i).cusSONo + "'"
+            d3Cmd.CommandText = "select * from [" + tablename + "]  where 订单号 ='" + SOMains(i).cusSONo + "'"
             d3Cmd.Connection = excConn
             Dim d3r As OleDbDataReader
             d3r = d3Cmd.ExecuteReader
@@ -402,7 +412,7 @@ ErrHandler:
             '' domBody.RowCount = 10 '设置BO对象(表体)行数为多行
 
             Dim d3Cmd As New OleDb.OleDbCommand
-            d3Cmd.CommandText = "select * from [Sheet1$]  where 订单号 ='" + SOMains(i).cusSONo + "'"
+            d3Cmd.CommandText = "select * from [" + tablename + "]  where 订单号 ='" + SOMains(i).cusSONo + "'"
             d3Cmd.Connection = excConn
             Dim d3r As OleDbDataReader
             d3r = d3Cmd.ExecuteReader

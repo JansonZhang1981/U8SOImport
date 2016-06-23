@@ -15,6 +15,7 @@ Public Class ExcelLoad2
     Public dt As DataTable
     Public newdt As DataTable
     Public fd() As String
+    Public tablename As String
 
     Private Sub ExcelLoad2_FormClosed(ByVal sender As Object, ByVal e As System.Windows.Forms.FormClosedEventArgs) Handles Me.FormClosed
         End
@@ -41,8 +42,16 @@ Public Class ExcelLoad2
         Dim _Connectstring = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=<FilePath>;Extended Properties=""Excel 8.0;HDR=YES;IMEX=1"""
         excConn = New OleDb.OleDbConnection(_Connectstring.Replace("<FilePath>", filename))
         excConn.Open()
+
+        tablename = GetFirstSheetNameFromExcelFileName(1) + "$"
+
+        If excConn.State = ConnectionState.Closed Then
+            excConn.Open()
+        End If
+
+
         dt = New DataTable()
-        Dim Sql As String = "select * from [Sheet1$]"
+        Dim Sql As String = "select * from [" + tablename + "]"
         Try
             Dim mycommand As OleDbDataAdapter = New OleDbDataAdapter(Sql, excConn)
             mycommand.Fill(dt)
@@ -233,7 +242,7 @@ Public Class ExcelLoad2
 
                 '----------------------------------- 必输字段 --------------------------------
                 ForecastDetail(j).SetValue("DInvCode", inv.cInvCode)   '物料编码(必须)，String类型
-                ForecastDetail(j).SetValue("DStartDate", yfhrq)   '起始日期(必须)，Date类型
+                ForecastDetail(j).SetValue("DStartDate", Format(Now(), "yyyy-MM-dd"))   '起始日期(必须)，Date类型
                 ForecastDetail(j).SetValue("DEndDate", yfhrq)   '结束日期(必须)，Date类型
                 ForecastDetail(j).SetValue("DFQty", quantity)   '预测数量(必须)，Double类型
                 ForecastDetail(j).SetValue("DAvgType", "0")   '均化类型(必须:0不均化/1日均化/2周均化/3月均化/4时格均化)，Integer类型
