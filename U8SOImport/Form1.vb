@@ -750,7 +750,7 @@ ErrHandler:
 
     Private Sub Button7_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button7.Click
     
-        SOImport()
+        CallU8Api()
    
     End Sub
     Private Sub SOImport()
@@ -919,4 +919,79 @@ ErrHandler:
         If pr.ShowDialog = Windows.Forms.DialogResult.Cancel Then Exit Sub
 
     End Sub
+
+    Public Sub CallU8Api()
+        On Error GoTo ErrHandler
+
+        Dim u8EnvCtx As New U8EnvContext
+        u8EnvCtx.U8Login = u8login
+
+        '第三步：构造ApiBroker对象,调用Connect,传入Api的地址标识(Url)，传入上下文
+        Dim u8apiBroker As New U8ApiComBroker
+        u8apiBroker.Connect("U8API/Forecast/ForecastAdd", u8EnvCtx)
+
+        Dim extbo As ExtensionBusinessEntity
+        extbo = u8apiBroker.GetExtBoEntity("extbo")
+
+
+        '************************************* 主表 **********************************
+
+        '----------------------------------- 必输字段 --------------------------------
+        extbo(0).SetValue("ForecastId", "100000001")   '主键，Integer类型
+        extbo(0).SetValue("FoCode", "100000001")   '预测单号(必须)，String类型
+        extbo(0).SetValue("DocDate", "2016-06-22")   '单据日期(必须)，Date类型
+        extbo(0).SetValue("MpsFlag", "2")   '单据类别(必须:1MPS/2MRP)，Integer类型
+        extbo(0).SetValue("Version", "V1")   '预测版本号(必须)，String类型
+
+        extbo(0).SetValue("Define_1", "5813")   '表头自定义项1，String类型
+
+
+
+        '******************************** 子表[ForecastDetail] ***************************
+
+        Dim ForecastDetail As ExtensionBusinessEntity
+        ForecastDetail = extbo(0).GetSubEntity("ForecastDetail")
+
+
+        '----------------------------------- 必输字段 --------------------------------
+        ForecastDetail(0).SetValue("DInvCode", "1010000001")   '物料编码(必须)，String类型
+        ForecastDetail(0).SetValue("DStartDate", "2016-06-22")   '起始日期(必须)，Date类型
+        ForecastDetail(0).SetValue("DEndDate", "2016-06-22")   '结束日期(必须)，Date类型
+        ForecastDetail(0).SetValue("DFQty", "600")   '预测数量(必须)，Double类型
+        ForecastDetail(0).SetValue("DAvgType", "0")   '均化类型(必须:0不均化/1日均化/2周均化/3月均化/4时格均化)，Integer类型
+        ForecastDetail(0).SetValue("DAvgRounded", "0")   '均化取整(必须:0/不取整/1取上整/2取下整)，Integer类型
+
+        '---------------------------------- 非必输字段 -------------------------------
+        'ForecastDetail(0).SetValue("DInvAddCode", "字段值")   '物料代号(导出用)，String类型
+        'ForecastDetail(0).SetValue("DInvName", "字段值")   '物料名称(导出用)，String类型
+        'ForecastDetail(0).SetValue("DInvStd", "字段值")   '物料规格(导出用)，String类型
+
+
+        '第五步：调用API
+        If u8apiBroker.InvokeApi() = False Then
+            '第六步：错误处理
+            MsgBox(u8apiBroker.GetLastError())
+            If u8apiBroker.ErrorType = ExceptionType.Business Then
+                '处理API业务错误
+            ElseIf u8apiBroker.ErrorType = ExceptionType.System Then
+                '处理系统错误
+            End If
+        Else
+            '第七步：获取返回结果
+
+            '获取返回值
+            '获取普通返回值。此返回值数据类型为Boolean，此参数按值传递，表示返回值: true:成功, false: 失败
+            Dim result As Boolean
+            result = CBool(u8apiBroker.GetReturnValue())
+        End If
+
+        '结束本次调用，释放API资源
+        u8apiBroker.Disconnect()
+
+        u8apiBroker = Nothing
+        Exit Sub
+ErrHandler:
+        MsgBox(Err.Description)
+    End Sub
+
 End Class

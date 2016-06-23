@@ -117,7 +117,7 @@ Public Class ExcelLoad2
 
         t.Start()
         Thread.Sleep(0)
-        SOImport()
+        ForecastImport()
         t.Abort()
         '   MsgBox("导入成功", MsgBoxStyle.OkOnly, "提示")
         msg = "导入成功"
@@ -175,11 +175,114 @@ Public Class ExcelLoad2
         j = SMains.Length - 1
         showSO1(j)
     End Sub
+    Private Sub ForecastImport()
+        On Error GoTo ErrHandler
+        Dim v As Integer
+        Dim x As Integer = 0 - CInt(TextBox1.Text)
+
+
+        Dim u8EnvCtx As New U8EnvContext
+        u8EnvCtx.U8Login = u8login
+
+        '第三步：构造ApiBroker对象,调用Connect,传入Api的地址标识(Url)，传入上下文
+        Dim u8apiBroker As New U8ApiComBroker
+        u8apiBroker.Connect("U8API/Forecast/ForecastAdd", u8EnvCtx)
+
+        Dim extbo As ExtensionBusinessEntity
+        extbo = u8apiBroker.GetExtBoEntity("extbo")
+        extbo.ItemCount = SMains.Length
+
+
+        For i = 0 To SMains.Length - 1
+
+
+            '************************************* 主表 **********************************
+
+            '----------------------------------- 必输字段 --------------------------------
+            extbo(i).SetValue("ForecastId", "100000001")   '主键，Integer类型
+            extbo(i).SetValue("FoCode", "YC201606220001")   '预测单号(必须)，String类型
+            extbo(i).SetValue("DocDate", Format(Now(), "yyyy-MM-dd"))   '单据日期(必须)，Date类型
+            extbo(i).SetValue("MpsFlag", "2")   '单据类别(必须:1MPS/2MRP)，Integer类型
+            extbo(i).SetValue("Version", "V1")   '预测版本号(必须)，String类型
+
+            extbo(i).SetValue("Define_10", SMains(i).dhf)   '表头自定义项1，String类型
+
+            Dim dv As DataView = New DataView(newdt)
+            dv.RowFilter = "dhf = '" + SMains(i).dhf + "'"
+            Dim dt2 As DataTable = dv.ToTable()
+            Dim j As Integer
+            Dim y As Integer = 0
+            '  MsgBox(dt2.Rows.Count)
+            For j = 0 To dt2.Rows.Count - 1
+
+
+                Dim inv As New Inventory(dt2.Rows(j)("partno").ToString)
+                Dim quantity As String = dt2.Rows(j)("sl").ToString
+                Dim yfhrq As String = Format(CDate(dt2.Rows(j)("sdate").ToString), "yyyy-MM-dd")
+                yfhrq = DateAdd("d", x, yfhrq)
+                If DateDiff("d", Format(Now(), "yyyy-MM-dd"), yfhrq) < 0 Then
+                    yfhrq = Format(Now(), "yyyy-MM-dd")
+                End If
+
+
+                '******************************** 子表[ForecastDetail] ***************************
+
+                Dim ForecastDetail As ExtensionBusinessEntity
+                ForecastDetail = extbo(i).GetSubEntity("ForecastDetail")
+
+
+                '----------------------------------- 必输字段 --------------------------------
+                ForecastDetail(j).SetValue("DInvCode", inv.cInvCode)   '物料编码(必须)，String类型
+                ForecastDetail(j).SetValue("DStartDate", yfhrq)   '起始日期(必须)，Date类型
+                ForecastDetail(j).SetValue("DEndDate", yfhrq)   '结束日期(必须)，Date类型
+                ForecastDetail(j).SetValue("DFQty", quantity)   '预测数量(必须)，Double类型
+                ForecastDetail(j).SetValue("DAvgType", "0")   '均化类型(必须:0不均化/1日均化/2周均化/3月均化/4时格均化)，Integer类型
+                ForecastDetail(j).SetValue("DAvgRounded", "0")   '均化取整(必须:0/不取整/1取上整/2取下整)，Integer类型
+
+                y += 1
+                v = y
+
+            Next
+
+        Next
+
+
+        '第五步：调用API
+        If u8apiBroker.InvokeApi() = False Then
+            '第六步：错误处理
+            MsgBox(u8apiBroker.GetLastError())
+            If u8apiBroker.ErrorType = ExceptionType.Business Then
+                '处理API业务错误
+            ElseIf u8apiBroker.ErrorType = ExceptionType.System Then
+                '处理系统错误
+            End If
+        Else
+            '第七步：获取返回结果
+
+            '获取返回值
+            '获取普通返回值。此返回值数据类型为Boolean，此参数按值传递，表示返回值: true:成功, false: 失败
+            Dim result As Boolean
+            result = CBool(u8apiBroker.GetReturnValue())
+        End If
+
+        '结束本次调用，释放API资源
+        u8apiBroker.Disconnect()
+
+        u8apiBroker = Nothing
+
+        'MsgBox("导入成功", MsgBoxStyle.OkOnly, "提示")
+        Button1.Enabled = False
+        excConn.Close()
+        Exit Sub
+ErrHandler:
+        '   MsgBox(v)
+        MsgBox(Err.Description)
+    End Sub
     Private Sub SOImport()
         On Error GoTo ErrHandler
         Dim v As Integer
         Dim x As Integer = 0 - CInt(TextBox1.Text)
-      
+
         For i = 0 To SMains.Length - 1
             Dim u8EnvCtx As New U8EnvContext
             u8EnvCtx.U8Login = u8login
@@ -244,7 +347,7 @@ Public Class ExcelLoad2
             setAttribute(ele, "iexchrate", "1")   '汇率，Double类型
             setAttribute(ele, "cdefine10", SMains(i).dhf)   '到货方，String类型
 
-     
+
 
             u8apiBroker.AssignNormalValue("DomHead", domHead)
 
