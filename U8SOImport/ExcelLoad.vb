@@ -85,9 +85,9 @@ Public Class ExcelLoad
 
 
         Catch ex As Exception
-            MsgBox(ex.Message)
+            '  MsgBox(ex.Message)
             excConn.Close()
-            MsgBox("请注意Sheet名是否为Sheet1！")
+            MsgBox("请选择正确的文件！")
             Exit Sub
         End Try
 
@@ -235,12 +235,16 @@ Public Class ExcelLoad
             strSOID = "0"
             strCode = TextBox1.Text
 
+            Dim dh As String
+            dh = Format(Now(), "yyyy-MM-dd")
+            dh = Replace(dh, "-", "")
+            dh = "SO" + dh + "0001"
 
             '给BO对象(表头)的字段赋值，值可以是真实类型，也可以是无类型字符串
             '****************************** 以下是必输字段 *****************************
 
             setAttribute(ele, "id", "0000000001")   '主关键字段，Integer类型
-            setAttribute(ele, "csocode", "0000000001")   '订 单 号，String类型
+            setAttribute(ele, "csocode", dh)   '订 单 号，String类型
             setAttribute(ele, "ddate", Format(Now(), "yyyy-MM-dd"))   '订单日期，Date类型
             setAttribute(ele, "cbustype", "普通销售")   '业务类型，Integer类型
             setAttribute(ele, "cstname", "普通销售")   '销售类型，String类型

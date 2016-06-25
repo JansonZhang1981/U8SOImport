@@ -51,7 +51,7 @@ Public Class FileOpen
                 elForm.Show()
             End If
 
-            '    Form1.Show()
+            '   Form1.Show()
 
 
 

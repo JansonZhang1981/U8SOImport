@@ -71,7 +71,7 @@ Public Class ExcelLoad2
         Catch ex As Exception
             excConn.Close()
             MsgBox("请选择正确的导入文件!")
-            '   Exit Sub
+            Exit Sub
         End Try
 
         'fd(0) = dt.Rows(0)("F3").ToString
@@ -202,6 +202,12 @@ Public Class ExcelLoad2
         extbo.ItemCount = SMains.Length
 
 
+        Dim dh As String = Format(Now(), "yyyy-MM-dd")
+        dh = Replace(dh, "-", "")
+        dh = "YC" + dh + "0001"
+
+
+
         For i = 0 To SMains.Length - 1
 
 
@@ -209,7 +215,7 @@ Public Class ExcelLoad2
 
             '----------------------------------- 必输字段 --------------------------------
             extbo(i).SetValue("ForecastId", "100000001")   '主键，Integer类型
-            extbo(i).SetValue("FoCode", "YC201606220001")   '预测单号(必须)，String类型
+            extbo(i).SetValue("FoCode", dh)   '预测单号(必须)，String类型
             extbo(i).SetValue("DocDate", Format(Now(), "yyyy-MM-dd"))   '单据日期(必须)，Date类型
             extbo(i).SetValue("MpsFlag", "2")   '单据类别(必须:1MPS/2MRP)，Integer类型
             extbo(i).SetValue("Version", "V1")   '预测版本号(必须)，String类型
@@ -627,7 +633,7 @@ ErrHandler:
 
         Dim dv As DataView = New DataView(dt)
 
-        For i = 0 To 1
+        For i = 0 To SMains.Length - 1
             dv.RowFilter = "到货工厂代码 = '" + SMains(i).dhf + "'"
             Dim dt2 As DataTable = dv.ToTable()
 

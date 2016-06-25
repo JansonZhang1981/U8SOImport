@@ -749,13 +749,15 @@ ErrHandler:
     End Sub
 
     Private Sub Button7_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button7.Click
-        Dim x As String = GetTablename()
+        Dim dh As String = Format(Now(), "yyyy-MM-dd")
+        dh = Replace(dh, "-", "")
+        MsgBox(dh)
 
         'Dim x As Array = test()
         'For i = 0 To x.Length - 1
         '    MsgBox(CStr(i) + "||||||" + x(i).ToString)
         'Next
-   
+
     End Sub
     Private Sub SOImport()
         On Error GoTo ErrHandler

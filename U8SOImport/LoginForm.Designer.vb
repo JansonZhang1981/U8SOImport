@@ -73,7 +73,7 @@ Partial Class LoginForm
         Me.UsernameTextBox.Location = New System.Drawing.Point(174, 44)
         Me.UsernameTextBox.Name = "UsernameTextBox"
         Me.UsernameTextBox.Size = New System.Drawing.Size(220, 21)
-        Me.UsernameTextBox.TabIndex = 1
+        Me.UsernameTextBox.TabIndex = 3
         Me.UsernameTextBox.Text = "0018"
         '
         'PasswordTextBox
@@ -82,7 +82,7 @@ Partial Class LoginForm
         Me.PasswordTextBox.Name = "PasswordTextBox"
         Me.PasswordTextBox.PasswordChar = Global.Microsoft.VisualBasic.ChrW(42)
         Me.PasswordTextBox.Size = New System.Drawing.Size(220, 21)
-        Me.PasswordTextBox.TabIndex = 3
+        Me.PasswordTextBox.TabIndex = 1
         '
         'OK
         '
