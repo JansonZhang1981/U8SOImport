@@ -166,28 +166,27 @@ Module util
             Dim strFirstSheetName = ""
             Dim obj As New Microsoft.Office.Interop.Excel.Application
             Dim WB As Microsoft.Office.Interop.Excel.Workbook = obj.Workbooks.Open(filename)
-            '     MsgBox(obj.Sheets(1).name)
-            'Dim objWB As Microsoft.Office.Interop.Excel.Workbook
-            'objWB = obj.Workbooks.Open(filename, Type.Missing, Type.Missing, _
-            '            Type.Missing, Type.Missing, Type.Missing, Type.Missing, _
-            '            Type.Missing, Type.Missing, Type.Missing, Type.Missing, _
-            '            Type.Missing, Type.Missing, Type.Missing, Type.Missing)
-            'strFirstSheetName = objWB.Worksheets(numberSheetID).name
-            'objWB.Close(Type.Missing, Type.Missing, Type.Missing)
-            'objWB = Nothing
-            'obj.Quit()
-            'obj = Nothing
+    
             Dim xlSheet As Microsoft.Office.Interop.Excel.Worksheet
             xlSheet = WB.Sheets(numberSheetID)
-            '  MsgBox(xlSheet.Name)
-            'For Each sheet In WB.Sheets
-            '    MsgBox(sheet.Name)
-            'Next
+      
             strFirstSheetName = xlSheet.Name
-            WB.Close()
-            WB = Nothing
+            'xlSheet = Nothing
+            'WB.Close()
+            'WB = Nothing
+            'obj.Quit()
+            'obj = Nothing
+
+
+            obj.Workbooks.Close()
+
             obj.Quit()
+            xlSheet = Nothing
+            WB = Nothing
             obj = Nothing
+
+            System.GC.Collect()
+           
             Return strFirstSheetName
 
         Catch ex As Exception
@@ -196,4 +195,5 @@ Module util
         End Try
 
     End Function
+    
 End Module

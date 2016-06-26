@@ -45,6 +45,7 @@ Public Class ExcelLoad
             '   MsgBox(GetFirstSheetNameFromExcelFileName(1))
             tablename = GetFirstSheetNameFromExcelFileName(1) + "$"
 
+
             If excConn.State = ConnectionState.Closed Then
                 excConn.Open()
             End If
@@ -58,7 +59,7 @@ Public Class ExcelLoad
 
 
         Dim dCmd As New OleDb.OleDbCommand
-        dCmd.CommandText = "select distinct 订单号 from [" + tablename + "]  where 订单号 is not null"
+        dCmd.CommandText = "select distinct 订单号,到货方 from [" + tablename + "]  where 订单号 is not null"
         dCmd.Connection = excConn
 
 
@@ -66,22 +67,36 @@ Public Class ExcelLoad
 
             Dim dr As OleDbDataReader
             dr = dCmd.ExecuteReader
+
             Dim i As Integer = 0
             Do While dr.Read
                 Dim d2cmd As New OleDbCommand
-                d2cmd.CommandText = "select top 1 *  from [" + tablename + "]  where 订单号 ='" + dr("订单号").ToString + "'"
+
+                If IsDBNull(dr("到货方")) Then
+                    d2cmd.CommandText = "select top 1 *  from [" + tablename + "]  where 订单号 ='" + dr("订单号").ToString + "' and 到货方 is null "
+
+                Else
+                    d2cmd.CommandText = "select top 1 *  from [" + tablename + "]  where 订单号 ='" + dr("订单号").ToString + "' and 到货方 = '" + dr("到货方").ToString + "'"
+
+                End If
                 d2cmd.Connection = excConn
                 Dim d2r As OleDbDataReader
                 d2r = d2cmd.ExecuteReader
 
                 Do While d2r.Read
                     ReDim Preserve SOMains(i)
-                    Dim sm As New SOMain(d2r("订单号").ToString, d2r("到货方").ToString, d2r("要货方").ToString, d2r("到货仓库").ToString, Format(CDate(d2r("订单接收时间").ToString), "yyyy-MM-dd"), Format(CDate(d2r("要求到货时间").ToString), "yyyy-MM-dd"))
+                    Dim sm As SOMain
+                    If IsDBNull(d2r("到货方")) Then
+
+                        sm = New SOMain(d2r("订单号").ToString, "NULL", "", "", Format(CDate(d2r("订单接收时间").ToString), "yyyy-MM-dd"), Format(CDate(d2r("要求到货时间").ToString), "yyyy-MM-dd"))
+                    Else
+                        sm = New SOMain(d2r("订单号").ToString, d2r("到货方").ToString, "", "", Format(CDate(d2r("订单接收时间").ToString), "yyyy-MM-dd"), Format(CDate(d2r("要求到货时间").ToString), "yyyy-MM-dd"))
+
+                    End If
                     SOMains(i) = sm
                     i += 1
                 Loop
             Loop
-
 
 
         Catch ex As Exception
@@ -137,11 +152,17 @@ Public Class ExcelLoad
         j = 0
     End Sub
     Private Sub showSO(ByVal i As Integer)
+ 
         info = "第" + (i + 1).ToString + "页；共" + SOMains.Length.ToString + "页"
         Label7.Text = info
         TextBox1.Text = SOMains(i).cusSONo
         TextBox2.Text = SOMains(i).yhf
-        TextBox3.Text = SOMains(i).dhf
+        If SOMains(i).dhf = "NULL" Then
+            TextBox3.Text = ""
+        Else
+            TextBox3.Text = SOMains(i).dhf
+        End If
+
         TextBox4.Text = SOMains(i).dhck
         TextBox5.Text = SOMains(i).sodate
         TextBox6.Text = SOMains(i).dhrq
@@ -151,14 +172,21 @@ Public Class ExcelLoad
         '上两行打开一个读取excel的链接
         '   MsgBox(_Connectstring)
         Dim mydataset As DataSet = New DataSet
-        Using da As OleDb.OleDbDataAdapter = New OleDb.OleDbDataAdapter("select distinct 零件号,零件名称,订货数量 from [" + tablename + "] where 订单号='" + SOMains(i).cusSONo + "'", excConn)
+
+        Dim str As String = ""
+        If SOMains(i).dhf = "NULL" Then
+            str = " is null"
+        Else
+            str="='"+ SOMains(i).dhf +"'"
+        End If
+        Using da As OleDb.OleDbDataAdapter = New OleDb.OleDbDataAdapter("select  零件号,零件名称,订货数量 from [" + tablename + "] where 订单号 = '" + SOMains(i).cusSONo + "' and 到货方 " + str, excConn)
 
             Try
                 dt = New DataTable
                 da.Fill(dt)
             Catch ex As Exception
                 '   Console.WriteLine(ex)
-                MsgBox("请注意Sheet名是否为Sheet1！")
+                MsgBox("请选择正确的文件！")
             End Try
 
             '   dt = mydataset.Tables("Sheet1")
@@ -240,12 +268,21 @@ Public Class ExcelLoad
             dh = Replace(dh, "-", "")
             dh = "SO" + dh + "0001"
 
+            Dim dhf As String
+            If SOMains(i).dhf = "NULL" Then
+                dhf = ""
+            Else
+                dhf = SOMains(i).dhf
+
+            End If
+
             '给BO对象(表头)的字段赋值，值可以是真实类型，也可以是无类型字符串
             '****************************** 以下是必输字段 *****************************
 
             setAttribute(ele, "id", "0000000001")   '主关键字段，Integer类型
             setAttribute(ele, "csocode", dh)   '订 单 号，String类型
-            setAttribute(ele, "ddate", Format(Now(), "yyyy-MM-dd"))   '订单日期，Date类型
+            '       setAttribute(ele, "ddate", Format(Now(), "yyyy-MM-dd"))   '订单日期，Date类型
+            setAttribute(ele, "ddate", Format(CDate(SOMains(i).sodate), "yyyy-MM-dd"))   '订单日期，Date类型
             setAttribute(ele, "cbustype", "普通销售")   '业务类型，Integer类型
             setAttribute(ele, "cstname", "普通销售")   '销售类型，String类型
             setAttribute(ele, "ccusabbname", cus.ccusabbname)   '客户简称，String类型
@@ -258,7 +295,7 @@ Public Class ExcelLoad
             setAttribute(ele, "cstcode", "01")   '销售类型编号，String类型
             setAttribute(ele, "cdepcode", "07")   '部门编码，String类型
             setAttribute(ele, "iexchrate", "1")   '汇率，Double类型
-            setAttribute(ele, "cdefine10", SOMains(i).dhf)   '到货方，String类型
+            setAttribute(ele, "cdefine10", dhf)   '到货方，String类型
             setAttribute(ele, "cdefine11", SOMains(i).cusSONo)   '客户订单号，String类型
             setAttribute(ele, "cdefine12", SOMains(i).yhf)   '要货方，String类型
             setAttribute(ele, "cdefine13", SOMains(i).dhck)   '到货仓库，String类型
@@ -271,11 +308,17 @@ Public Class ExcelLoad
             rs.Close()
             rs = Nothing
 
+            Dim Str As String
+            If SOMains(i).dhf = "NULL" Then
+                Str = " is null"
+            Else
+                Str = " ='" + SOMains(i).dhf + "'"
+            End If
 
             '增加表体数据节点z:row
             eleBody = domBody.selectSingleNode("//rs:data")
             Dim d3Cmd As New OleDb.OleDbCommand
-            d3Cmd.CommandText = "select * from [" + tablename + "]  where 订单号 ='" + SOMains(i).cusSONo + "'"
+            d3Cmd.CommandText = "select * from [" + tablename + "]  where 订单号 ='" + SOMains(i).cusSONo + "'and 到货方" + Str
             d3Cmd.Connection = excConn
             Dim d3r As OleDbDataReader
             d3r = d3Cmd.ExecuteReader
@@ -287,9 +330,9 @@ Public Class ExcelLoad
                 Dim inv As New Inventory(d3r("零件号").ToString)
                 Dim quantity As String = d3r("订货数量").ToString
                 Dim yfhrq As String = Format(CDate(d3r("要求到货时间").ToString), "yyyy-MM-dd")
-                If DateDiff("d", Format(Now(), "yyyy-MM-dd"), yfhrq) < 0 Then
-                    yfhrq = Format(Now(), "yyyy-MM-dd")
-                End If
+                'If DateDiff("d", Format(Now(), "yyyy-MM-dd"), yfhrq) < 0 Then
+                '    yfhrq = Format(Now(), "yyyy-MM-dd")
+                'End If
                 '  Dim yfhrq As String = Format("2016-6-22  0:00:00", "yyyy-MM-dd")
                 '****************************** 以下是必输字段 *****************************
                 '’ setAttribute(ele,"isosid", "字段值")   '主关键字段，Integer类型
